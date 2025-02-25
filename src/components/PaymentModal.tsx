@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
+import { PayPalButtons } from '@paypal/react-paypal-js';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -64,35 +64,39 @@ export default function PaymentModal({ isOpen, onClose, onComplete, amount, lang
             </div>
           )}
 
-          <PayPalScriptProvider options={{ 
-            "client-id": "test",
-            currency: "USD"
-          }}>
-            <PayPalButtons
-              style={{ layout: "vertical" }}
-              createOrder={(_data, actions) => {
-                return actions.order.create({
-                  purchase_units: [
-                    {
-                      amount: {
-                        value: amountUSD.toString()
-                      }
+          <PayPalButtons
+            style={{ layout: "vertical" }}
+            createOrder={(_data, actions) => {
+              return actions.order.create({
+                purchase_units: [
+                  {
+                    amount: {
+                      value: amountUSD.toString(),
+                      currency_code: "USD"
                     }
-                  ]
-                });
-              }}
-              onApprove={async (_data, _actions) => {
-                // Skip payment processing in development
+                  }
+                ]
+              });
+            }}
+            onApprove={async (data, actions) => {
+              try {
+                const order = await actions.order?.capture();
+                console.log('Payment completed:', order);
                 onComplete();
-              }}
-              onError={(err) => {
-                console.error('PayPal error:', err);
+              } catch (error) {
+                console.error('Payment error:', error);
                 setError(language === 'ko'
                   ? '결제 처리 중 오류가 발생했습니다'
                   : '決済処理中にエラーが発生しました');
-              }}
-            />
-          </PayPalScriptProvider>
+              }
+            }}
+            onError={(err) => {
+              console.error('PayPal error:', err);
+              setError(language === 'ko'
+                ? '결제 처리 중 오류가 발생했습니다'
+                : '決済処理中にエラーが発生しました');
+            }}
+          />
 
           <p className="text-center text-sm text-gray-500 mt-4">
             {language === 'ko'
