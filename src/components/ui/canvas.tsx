@@ -149,6 +149,8 @@ function onMousemove(e) {
 }
 
 function render() {
+  if (!ctx) return;
+
   // @ts-ignore
   if (ctx.running) {
     // @ts-ignore
@@ -161,14 +163,24 @@ function render() {
     ctx.strokeStyle = "hsla(" + Math.round(f.update()) + ",100%,50%,0.025)";
     // @ts-ignore
     ctx.lineWidth = 10;
-    for (var e, t = 0; t < E.trails; t++) {
-      // @ts-ignore
-      (e = lines[t]).update();
-      e.draw();
+
+    if (lines) {
+      for (var e, t = 0; t < E.trails; t++) {
+        // @ts-ignore
+        (e = lines[t])?.update();
+        e?.draw();
+      }
     }
+
     // @ts-ignore
     ctx.frame++;
     window.requestAnimationFrame(render);
+  } else {
+    // エフェクトが停止していても背景を透明にする
+    // @ts-ignore
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    // @ts-ignore
+    ctx.globalCompositeOperation = "source-over";
   }
 }
 
@@ -203,21 +215,40 @@ function Node() {
 }
 
 export const renderCanvas = function () {
+  const canvas = document.getElementById("canvas");
+  if (!canvas) return;
+
   // @ts-ignore
-  ctx = document.getElementById("canvas").getContext("2d");
+  ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  // 背景を透明に設定
+  // @ts-ignore
+  canvas.style.background = 'transparent';
   ctx.running = true;
   ctx.frame = 1;
+
+  // 初期設定
   f = new n({
     phase: Math.random() * 2 * Math.PI,
     amplitude: 85,
     frequency: 0.0015,
     offset: 285,
   });
-  document.addEventListener("mousemove", onMousemove);
-  document.addEventListener("touchstart", onMousemove);
+
+  // イベントリスナーの設定
+  const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+    if (!ctx?.running) return;
+    onMousemove(e);
+  };
+
+  document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("touchstart", handleMouseMove);
   document.body.addEventListener("orientationchange", resizeCanvas);
   window.addEventListener("resize", resizeCanvas);
+  
   window.addEventListener("focus", () => {
+    if (!ctx) return;
     // @ts-ignore
     if (!ctx.running) {
       // @ts-ignore
@@ -225,9 +256,30 @@ export const renderCanvas = function () {
       render();
     }
   });
+  
   window.addEventListener("blur", () => {
+    if (!ctx) return;
     // @ts-ignore
-    ctx.running = true;
+    ctx.running = false;
   });
+
+  // エフェクトの停止/再開を制御する関数を追加
+  // @ts-ignore
+  window.toggleCanvasEffect = function() {
+    if (!ctx) return;
+    // @ts-ignore
+    if (ctx.running) {
+      // @ts-ignore
+      ctx.running = false;
+      // エフェクトを停止時にcanvasをクリア
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    } else {
+      // @ts-ignore
+      ctx.running = true;
+      render();
+    }
+  };
+
   resizeCanvas();
+  render();
 };
