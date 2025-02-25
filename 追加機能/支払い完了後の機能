@@ -1,0 +1,298 @@
+了解しました。IRU TOMOのプロトタイプ（Bolt.new上でReactを使用し、Supabaseと統合）において、PayPal支払い完了後の機能を詳細に設計し、PlantUMLを使用して視覚的に表現します。支払い完了後の機能には、自動メール送信、予約データ保存、ユーザー通知などが含まれます。現在の日付（2025年2月22日3:13 AM PST）を踏まえ、IRU TOMOの要件（韓国人MZ世代向け、MVPフェーズ、手動運用）を考慮し、構造化・清書します。
+
+---
+
+### 支払い完了後の機能詳細設計
+
+#### 1. 機能概要
+PayPalでの支払い（1,000 JPYの手数料）完了後に、以下の機能を実装します。これにより、ユーザー体験を強化し、韓国人MZ世代に信頼感と利便性を提供します。
+
+- **支払い確認**:
+  - PayPal APIから取引成功（`payment_id`や`status`）を確認。
+  - Supabaseの`reservations`テーブルに支払いステータス（`payment_status`）を保存。
+
+- **自動メール送信**:
+  - ユーザーのメールアドレスに予約確認と支払い完了通知を送信。
+  - メール内容：予約詳細（レストラン名、予約日時、人数）、支払い額（1,000 JPY）、IRU TOMOの連絡先情報。
+  - 言語対応：韓国語（例: 「예약 확인 및 결제 완료 안내」）と日本語（例: 「予約確認および支払い完了のお知らせ」）で送信。
+  - デザイン：オレンジと白のカラースキーム、IRU TOMOのブランドロゴ（プレースホルダー）付き。
+
+- **通知（オプション）**:
+  - プッシュ通知やSMSで予約完了を通知（MVPではメールのみで対応し、将来的に拡張）。
+  - スタッフ向け通知：支払い完了をスタッフが確認可能（初期は手動確認）。
+
+- **エラー処理**:
+  - 支払い失敗やメール送信失敗時のログ記録と、ユーザーにエラーメッセージを表示。
+  - スタッフが手動で対応（電話やメールでユーザーに連絡）。
+
+#### 2. 技術的詳細
+- **バックエンド**:
+  - **フレームワーク**: Node.js（Express）またはSupabase Functions。
+  - **PayPal API**: PayPal REST APIまたはCheckout APIを使用して、取引処理と確認。
+  - **メール送信**: `nodemailer`ライブラリ＋SMTP（SendGrid、Gmail、AWS SESの無料プラン）を使用。
+  - **データベース**: Supabase（`reservations`テーブルに`payment_status`、`transaction_id`を追加）。
+
+- **フロントエンド**:
+  - ReactコンポーネントでPayPalボタンを表示（`@paypal/react-paypal-js`ライブラリ）。
+  - 支払い完了後の成功メッセージ（アラートまたはモーダル）。
+
+- **インフラ**:
+  - Supabase Cloud（データベース、API）、Google Cloud（オプションのログ分析）、PayPalサーバー、メール送信サービス（SMTPサーバー）。
+
+#### 3. フロントエンドとバックエンドの連携
+- **フロントエンド**:
+  - 予約入力画面（`ReservationInput`コンポーネント）でPayPalボタンをレンダリング。
+  - 支払い成功時にサーバー（`POST /api/paypal/confirm`）にリクエストを送り、取引IDやステータスを送信。
+
+- **バックエンド**:
+  - `POST /api/paypal/confirm`エンドポイントでPayPal APIを呼び出し、取引確認。
+  - 成功した場合：
+    - Supabaseの`reservations`テーブルに`payment_status = 'completed'`、`transaction_id`を更新。
+    - `nodemailer`でユーザーにメール送信（`reservation_id`や`email`を元に）。
+  - 失敗した場合：エラーログを記録し、フロントエンドにエラーメッセージを返す。
+
+- **メール内容例**:
+  - **韓国語**:
+    ```
+    제목: [IRU TOMO] 예약 확인 및 결제 완료 안내
+    내용:
+    안녕하세요, IRU TOMO입니다!
+
+    귀하의 예약이 성공적으로 완료되었습니다. 아래는 예약 상세입니다:
+    - 레스토랑: 스시 타마야
+    - 예약 날짜: 2025년 2월 25일
+    - 예약 시간: 18:00
+    - 인원: 2명
+    - 결제 금액: 1,000 JPY (수수료)
+
+    추가 문의는 support@irutomo.com 또는 +81-123-456-7890으로 연락해주세요.
+    감사합니다!
+    IRU TOMO 팀
+    ```
+  - **日本語**:
+    ```
+    件名: [IRU TOMO] 予約確認および支払い完了のお知らせ
+    内容:
+    こんにちは、IRU TOMOです！
+
+    ご予約が無事に完了しました。以下は予約の詳細です：
+    - レストラン: 寿司 タマヤ
+    - 予約日: 2025年2月25日
+    - 予約時間: 18:00
+    - 人数: 2名
+    - 支払い金額: 1,000 JPY (手数料)
+
+    追加のご質問は support@irutomo.com または +81-123-456-7890 までお問い合わせください。
+    ありがとうございます！
+    IRU TOMO チーム
+    ```
+
+#### 4. 支払い完了後のシーケンス（PlantUML）
+
+PlantUMLを使用して、支払い完了後のフローを可視化します。アクター（ユーザー）、フロントエンド（React）、バックエンド（Supabase API）、外部サービス（PayPal、メール送信）を表現します。
+
+```plantuml
+@startuml 支払い完了後シーケンス図
+
+' スキン設定
+skinparam backgroundColor white
+skinparam borderColor #FF8C00
+skinparam defaultFontSize 14
+skinparam defaultFontName "Noto Sans"
+
+' アクターとコンポーネント
+actor "Korean MZ User" as User #LightBlue
+participant "React (Front-end)" as FE
+participant "Supabase API (Back-end)" as BE
+participant "PayPal API" as PayPal
+participant "Email Service (SMTP)" as Email
+
+' シーケンス
+loop 予約入力
+  User -> FE: 予約フォーム入力 (レストラン、日時、人数、メール)
+  FE -> FE: PayPalボタン表示
+  User -> FE: PayPalで支払い開始 (1,000 JPY)
+  FE -> PayPal: 支払いリクエスト送信
+  PayPal -> FE: 成功レスポンス (payment_id, status)
+  FE -> BE: POST /api/paypal/confirm (payment_id, reservation_data)
+end
+
+' 支払い確認と処理
+BE -> PayPal: 取引確認 (GET /v1/payments/{payment_id})
+PayPal -> BE: 取引ステータス (成功/失敗)
+alt 成功
+  BE -> DB: reservationsテーブル更新 (payment_status = 'completed', transaction_id)
+  BE -> Email: メール送信リクエスト (reservation_id, user_email)
+  Email -> User: 予約確認メール送信 (韓国語/日本語)
+else 失敗
+  BE -> FE: エラーレスポンス (支払い失敗)
+  FE -> User: エラーメッセージ表示
+  BE -> BE: エラーログ記録
+end
+
+' スタッフ通知（オプション、MVPでは手動）
+note right of BE
+  スタッフがSupabaseで支払いステータスを確認
+  必要に応じてユーザーへ電話/メール連絡
+end note
+
+@enduml
+```
+
+#### 5. 実装詳細（API側）
+- **エンドポイント**:
+  - `POST /api/paypal/checkout`: フロントエンドからPayPal支払いリクエストを受け取る。
+    - レスポンス: PayPalのクライアントIDやトークン。
+  - `POST /api/paypal/confirm`: 支払い完了後、取引確認とデータ保存。
+    - 入力: `payment_id`、`reservation_data`（`restaurant_id`、`reservation_date`など）。
+    - 出力: 成功（`{ status: 'completed', transaction_id }`）または失敗（エラーメッセージ）。
+
+- **データモデル（Supabase）**:
+  - `reservations`テーブル:
+    - `id`（UUID、プライマリキー）
+    - `restaurant_id`（`restaurants.id`参照）
+    - `user_email`（文字列、支払い完了メール送信用）
+    - `reservation_date`（日付）
+    - `reservation_time`（時間）
+    - `party_size`（整数）
+    - `payment_status`（文字列: `'pending'`、`'completed'`、`'failed'`）
+    - `transaction_id`（文字列、PayPal取引ID）
+    - `created_at`（タイムスタンプ）
+
+- **メール送信設定**:
+  - `nodemailer`構成例（Node.js/Supabase Functions）:
+    ```javascript
+    const nodemailer = require('nodemailer');
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com', // またはSendGrid/AWS SES
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    async function sendReservationEmail(reservation, locale = 'ko') {
+      const subject = locale === 'ko' ? '[IRU TOMO] 예약 확인 및 결제 완료 안내' : '[IRU TOMO] 予約確認および支払い完了のお知らせ';
+      const html = `
+        <div style="background: white; color: #333; padding: 20px; font-family: Noto Sans, sans-serif;">
+          <h1 style="color: #FF8C00;">${subject}</h1>
+          <p>안녕하세요, IRU TOMO입니다! / こんにちは、IRU TOMOです！</p>
+          <p>귀하의 예약이 성공적으로 완료되었습니다。/ ご予約が無事に完了しました。</p>
+          <ul>
+            <li>레스토랑: ${reservation.restaurant_name} / レストラン: ${reservation.restaurant_name_jp}</li>
+            <li>예약 날짜: ${reservation.date} / 予約日: ${reservation.date}</li>
+            <li>예약 시간: ${reservation.time} / 予約時間: ${reservation.time}</li>
+            <li>인원: ${reservation.party_size}명 / 人数: ${reservation.party_size}名</li>
+            <li>결제 금액: 1,000 JPY (수수료) / 支払い金額: 1,000 JPY (手数料)</li>
+          </ul>
+          <p>추가 문의는 support@irutomo.com 또는 +81-123-456-7890으로 연락해주세요。/ 追加のご質問は support@irutomo.com または +81-123-456-7890 までお問い合わせください。</p>
+          <p>감사합니다! / ありがとうございます！</p>
+          <img src="https://example.com/iru-tomo-logo.png" alt="IRU TOMO" style="max-width: 200px;">
+        </div>
+      `;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: reservation.user_email,
+        subject,
+        html,
+      });
+    }
+    ```
+
+- **PayPal統合例**:
+  - フロントエンド（React）:
+    ```javascript
+    import { PayPalButtons } from '@paypal/react-paypal-js';
+
+    function ReservationForm({ reservationData }) {
+      const handlePaymentSuccess = async (details) => {
+        const response = await fetch('/api/paypal/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_id: details.orderID, reservationData }),
+        });
+        const data = await response.json();
+        if (data.status === 'completed') {
+          alert('支払いが完了しました。確認メールを送信しました。');
+        } else {
+          alert('支払いに失敗しました。サポートにお問い合わせください。');
+        }
+      };
+
+      return (
+        <PayPalButtons
+          createOrder={(data, actions) => actions.order.create({ amount: { value: '1000' }, currency: 'JPY' })}
+          onApprove={handlePaymentSuccess}
+        />
+      );
+    }
+    ```
+  - バックエンド（Supabase Functions / Node.js）:
+    ```javascript
+    import { createClient } from '@supabase/supabase-js';
+    import paypal from '@paypal/checkout-server-sdk';
+
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+    export default async function handler(req, res) {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      const { payment_id, reservationData } = req.body;
+
+      // PayPalクライアント設定
+      const client = new paypal.core.PayPalHttpClient({
+        environment: new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_SECRET),
+      });
+
+      // 取引確認
+      const request = new paypal.orders.OrdersGetRequest(payment_id);
+      const response = await client.execute(request);
+
+      if (response.statusCode === 200 && response.result.status === 'COMPLETED') {
+        // Supabaseに支払いステータスを保存
+        const { data, error } = await supabase
+          .from('reservations')
+          .update({ payment_status: 'completed', transaction_id: payment_id })
+          .eq('id', reservationData.id);
+
+        if (error) throw new Error('Database update failed');
+
+        // メール送信
+        await sendReservationEmail({ ...reservationData, payment_id }, req.headers.locale || 'ko');
+
+        res.status(200).json({ status: 'completed', transaction_id: payment_id });
+      } else {
+        res.status(400).json({ error: 'Payment failed' });
+      }
+    }
+    ```
+
+#### 6. 運用・MVPフェーズの考慮
+- **手動運用**:
+  - 支払い失敗やメール送信失敗が発生した場合、スタッフがSupabaseで確認し、ユーザーに電話やメールで対応。
+  - 初期はダミーデータやモックレスポンスでテスト可能。
+
+- **コスト管理**:
+  - PayPal：取引手数料のみ（1,000 JPYの3.6% + 40円程度）。
+  - メール送信：SendGrid/Gmailの無料プランで対応（月間100通程度無料）。
+  - Supabase：無料プランで初期対応可能（10万行、2GBストレージ）。
+
+- **スケーラビリティ**:
+  - ユーザー数やリクエストが増加した場合、PayPalのプレミアムプラン、SendGridの低コストプラン、Supabaseの有料プランに移行。
+
+---
+
+### 補足
+- **PlantUMLの生成**:
+  - 上記のPlantUMLコードをPlantUMLツール（オンラインエディタやプラグイン）に入力し、PNGやSVG形式でシーケンス図を生成できます。
+  - 図はIRU TOMOのオレンジと白のカラースキーム（#FF8C00）を反映し、韓国人MZ世代に訴求する視覚的なデザインを採用。
+
+- **アクセシビリティとSEO**:
+  - メール内容はWCAG 2.1 AA準拠（コントラスト、フォントサイズ）を確保。
+  - フロントエンドのエラーメッセージや成功メッセージもアクセシビリティ対応。
+
+この設計は、IRU TOMOのMVPフェーズに適合し、簡略化された実装で迅速に展開可能。追加の質問や具体的なコード例、APIキーの設定支援が必要な場合は、お知らせください！

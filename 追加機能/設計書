@@ -1,0 +1,202 @@
+以下に、これまでの情報を踏まえて「IRU TOMO」のシステムアーキテクチャ設計をPlantUMLを使用して構造化・整理し、わかりやすく清書した資料を作成します。PlantUMLを使用することで、視覚的にシステム構成や技術スタック、フロントエンド・バックエンド・インフラ構成を表現します。現在の日付（2025年2月22日3:10 AM PST）を踏まえ、IRU TOMOの要件（韓国人MZ世代向け、MVPフェーズ、手動運用）を考慮します。
+
+---
+
+### 3-1. システムアーキテクチャ設計
+
+#### システム構成図
+PlantUMLを使用して、IRU TOMOのシステム全体のアーキテクチャを可視化します。以下の構成要素を含めます：
+- **フロントエンド**: React（Vite + TypeScript）で構築。
+- **バックエンド**: Supabase（データベース、認証、API）を使用。
+- **インフラ**: クラウドベース（Supabaseのホスティング、Google Maps API、PayPal API）。
+- **外部サービス**: Google Maps（埋め込みマップ）、PayPal（決済）、メール送信（ノードメールラー＋SMTP）。
+
+```plantuml
+@startuml IRU TOMO システムアーキテクチャ
+
+' スキン設定
+skinparam backgroundColor white
+skinparam borderColor #FF8C00
+skinparam defaultFontSize 14
+skinparam defaultFontName "Noto Sans"
+
+' アクター（ユーザー）
+actor "Korean MZ User" as User #LightBlue
+
+' フロントエンド
+package "フロントエンド (React)" {
+  [Landing Page] as LP
+  [Restaurant Search/Selection] as RS
+  [Restaurant Details] as RD
+  [Reservation Input] as RI
+}
+
+' バックエンド
+package "バックエンド (Supabase)" {
+  [Database (PostgreSQL)] as DB
+  [Auth] as Auth
+  [REST API/Functions] as API
+}
+
+' インフラ/外部サービス
+cloud "Supabase Cloud" {
+  DB
+  Auth
+  API
+}
+
+cloud "Google Cloud" {
+  [Google Maps API] as GMaps
+}
+
+cloud "PayPal" {
+  [PayPal API] as PayPal
+}
+
+cloud "Email Service" {
+  [SMTP (e.g., SendGrid/Gmail)] as Email
+}
+
+' 関係性
+User --> LP: アクセス
+LP --> RS: 検索へ
+RS --> RD: 選択
+RD --> RI: 予約入力
+RI --> PayPal: 支払い (1,000 JPY)
+PayPal --> API: 取引確認
+API --> DB: 予約保存
+API --> Email: 自動メール送信
+RD --> GMaps: マップ表示
+RI --> GMaps: マップ表示
+
+' デザイン強調
+LP .[#FF8C00].> RS : ナビゲーション
+RD .[#FF8C00].> RI : 遷移
+API .[#FF8C00].> DB : データ同期
+
+' 注釈
+note right of User
+  韓国人MZ世代（20-40歳）
+  デジタルネイティブ、トレンディなUI/UXを求める
+end note
+
+note right of LP
+  ランディングページ
+  オレンジと白のデザイン、韓国語/日本語対応
+end note
+
+note right of RS
+  レストラン検索/選択
+  Supabaseからデータフェッチ、フィルタリング
+end note
+
+note right of RD
+  レストラン詳細
+  Google Maps埋め込み、営業時間、ウェブサイトリンク
+end note
+
+note right of RI
+  予約入力
+  PayPal決済、予約データ保存、メール送信
+end note
+
+note right of DB
+  restaurants, reservationsテーブル
+  100店舗のデータ、予約履歴
+end note
+
+note right of GMaps
+  Google Maps JavaScript API
+  無料プラン（月200ドルクレジット）で対応
+end note
+
+note right of PayPal
+  PayPal REST API
+  取引手数料のみ、初期無料
+end note
+
+note right of Email
+  Nodemailer + SMTP
+  予約確認メール、韓国語/日本語対応
+end note
+
+@enduml
+```
+
+#### 技術スタック選定
+IRU TOMOの技術スタックを以下にまとめます。参考情報（Vite + React + TypeScript、Tailwind CSS、Supabase、Radix UI、Framer Motion）を基に整理。
+
+- **フロントエンド**:
+  - **フレームワーク**: Vite + React（高速な開発とビルド）。
+  - **言語/型**: TypeScript（型安全性の確保）。
+  - **スタイリング**: Tailwind CSS（レスポンシブでモダンなデザイン、オレンジと白のカラースキーム）。
+  - **コンポーネント**: Radix UI（アクセシビリティ対応のUIコンポーネント）。
+  - **アニメーション**: Framer Motion（スムーズなトランジション、ホバーエフェクト）。
+
+- **バックエンド**:
+  - **データベース/認証/API**: Supabase（PostgreSQLベース、REST API、リアルタイム機能、Auth機能）。
+  - **言語**: JavaScript/TypeScript（Supabase FunctionsやNode.jsで実装可能）。
+
+- **インフラ構成**:
+  - **ホスティング**: Supabase Cloud（サーバーレス、無料プランで初期対応可能）。
+  - **外部サービス**:
+    - **Google Maps API**: Google Maps JavaScript API（埋め込みマップ、無料プラン月200ドルクレジット）。
+    - **PayPal API**: PayPal REST APIまたはCheckout API（取引手数料のみ、初期無料）。
+    - **メール送信**: Nodemailer + SMTP（SendGrid/Gmail/AWS SESの無料プラン）。
+
+#### フロントエンド
+- **構成**:
+  - `project/src/components/`: 共通コンポーネント（ヘッダー、フッター、ボタン、マップ表示）。
+  - `project/src/lib/`: ユーティリティ関数（データフェッチ、言語切り替え、Google Maps処理）。
+  - `project/src/types/`: 型定義（レストラン、予約、支払いデータのインターフェース）。
+  - `project/src/App.tsx`: メインアプリケーション（ルーティング、状態管理）。
+  - `project/src/LandingPage.tsx`: ランディングページ（オレンジと白のデザイン、ナビゲーション）。
+  - `project/src/RestaurantSearch.tsx`: レストラン検索/選択ページ（Supabaseからのデータフェッチ、フィルタリング）。
+
+- **機能**:
+  - レストラン検索（Supabaseから100店舗のデータ取得）。
+  - 言語スイッチ（韓国語/日本語、Noto Sans KRフォント使用）。
+  - Google Maps埋め込みマップ表示（JavaScript API）。
+  - 予約入力フォーム（PayPal決済ボタン、予約データ送信）。
+
+#### バックエンド
+- **構成**:
+  - `supabase/`: Supabaseの設定ファイル（テーブルスキーマ、APIエンドポイント）。
+  - `scripts/`: データベース投入スクリプト（初期100店舗データ、予約データ）。
+
+- **機能**:
+  - レストランデータ管理（`restaurants`テーブル: `id`、`name`、`japanese_name`、`google_maps_link`、`store_website_link`、`operating_hours`）。
+  - 予約データ管理（`reservations`テーブル: `restaurant_id`、`reservation_date`、`reservation_time`、`party_size`、`payment_status`）。
+  - PayPal決済処理（取引確認、状態保存）。
+  - メール自動送信（予約確認、支払い完了通知、韓国語/日本語対応）。
+
+#### インフラ構成
+- **Supabase Cloud**:
+  - データベース（PostgreSQL、10万行無料、2GBストレージ）。
+  - 認証（Supabase Auth、将来のユーザー管理用）。
+  - REST API/Functions（サーバーレス、無料プランで対応）。
+
+- **外部サービス**:
+  - **Google Maps API**: JavaScript API（埋め込みマップ、無料プラン月200ドルクレジット）。
+  - **PayPal API**: REST API（取引手数料のみ、初期無料）。
+  - **メール送信**: Nodemailer + SMTP（SendGrid/Gmail/AWS SESの無料プラン）。
+
+- **開発環境**:
+  - ESLint（静的解析）、TypeScript（型安全性）、Vite（高速開発）、PostCSS + Tailwind CSS（最適化スタイリング）。
+
+---
+
+### 補足
+- **PlantUMLの生成**:
+  - 上記のPlantUMLコードをPlantUMLツール（オンラインエディタやプラグイン）に入力し、PNGやSVG形式でシステム構成図を生成できます。
+  - 図はIRU TOMOのオレンジと白のカラースキーム（#FF8C00）を反映し、韓国人MZ世代に訴求する視覚的なデザインを採用。
+
+- **MVPフェーズの考慮**:
+  - 無料プラン（Supabase、Google Maps、PayPal、メール送信）で初期コストを0円～数ドルに抑え、手動運用（スタッフによる電話予約）をサポート。
+  - 将来的なスケーラビリティ（ユーザー認証、リアルタイム更新、分析ダッシュボード）も考慮し、拡張性のある設計。
+
+- **アクセシビリティとSEO**:
+  - WCAG 2.1 AA準拠（コントラスト、キーボードナビゲーション、スクリーンリーダー対応）。
+  - メタタグやSEO最適化（ランディングページ、検索ページ）で韓国語/日本語検索に対応。
+
+この資料は、IRU TOMOのシステムアーキテクチャを明確に整理し、開発チームやステークホルダーに理解しやすい形で提供します。追加の調整や詳細なコード例が必要な場合は、お知らせください！
