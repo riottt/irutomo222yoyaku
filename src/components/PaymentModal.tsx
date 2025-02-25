@@ -103,12 +103,6 @@ export default function PaymentModal({ isOpen, onClose, onComplete, amount, lang
               }}
             />
           </PayPalScriptProvider>
-
-          <p className="text-center text-sm text-gray-500 mt-4">
-            {language === 'ko'
-              ? '* 이 화면은 시뮬레이션입니다'
-              : '* この画面はシミュレーションです'}
-          </p>
         </div>
       </motion.div>
     </motion.div>
