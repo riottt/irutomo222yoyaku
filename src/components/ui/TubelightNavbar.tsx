@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { DivideIcon as LucideIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { DivideIcon as LucideIcon, Menu, X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useScreenSize } from "../hooks/use-screen-size";
 import { PixelTrail } from "./PixelTrail";
@@ -21,11 +21,15 @@ interface NavBarProps {
 export function TubelightNavbar({ items, className, language }: NavBarProps) {
   const [activeTab, setActiveTab] = useState(items[0].name);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const screenSize = useScreenSize();
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsMenuOpen(false);
+      }
     };
 
     handleResize();
@@ -44,62 +48,98 @@ export function TubelightNavbar({ items, className, language }: NavBarProps) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
     }
+    if (isMobile) {
+      setIsMenuOpen(false);
+    }
   };
 
   return (
-    <nav className="relative bg-white border-b overflow-hidden">
-      <div className="absolute inset-0">
-        <PixelTrail
-          pixelSize={screenSize.lessThan("md") ? 24 : 40}
-          fadeDuration={800}
-          delay={200}
-          pixelClassName="rounded-full bg-[#FF8C00]/10"
-        />
-      </div>
-      <div className="container mx-auto px-4 relative">
-        <div className="flex items-center justify-center gap-3 py-3">
-          {items.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.name;
+    <nav className={cn("relative", className)}>
+      {/* モバイルメニューボタン */}
+      {isMobile && (
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="fixed top-4 right-4 z-50 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20"
+        >
+          {isMenuOpen ? (
+            <X className="w-6 h-6 text-white" />
+          ) : (
+            <Menu className="w-6 h-6 text-white" />
+          )}
+        </button>
+      )}
 
-            return (
-              <a
-                key={item.name}
+      {/* デスクトップナビゲーション */}
+      {!isMobile && (
+        <div className="flex items-center justify-center gap-2 p-2">
+          {items.map((item) => (
+            <PixelTrail key={item.name}>
+              <motion.a
                 href={item.url}
                 onClick={(e) => handleClick(e, item)}
                 className={cn(
-                  "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-                  "text-gray-600 hover:text-[#FF8C00]",
-                  isActive && "text-[#FF8C00]",
+                  "relative px-4 py-2 text-sm font-medium transition-colors",
+                  activeTab === item.name
+                    ? "text-white"
+                    : "text-white/75 hover:text-white"
                 )}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <span className="hidden md:inline">{item.name}</span>
-                <span className="md:hidden">
-                  <Icon size={18} strokeWidth={2.5} />
+                <span className="relative z-10 flex items-center gap-2">
+                  <item.icon className="w-4 h-4" />
+                  {item.name}
                 </span>
-                {isActive && (
+                {activeTab === item.name && (
                   <motion.div
-                    layoutId="lamp"
-                    className="absolute inset-0 w-full bg-[#FF8C00]/5 rounded-full -z-10"
-                    initial={false}
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
+                    layoutId="navbar-active"
+                    className="absolute inset-0 bg-white/10 rounded-full"
+                    style={{
+                      boxShadow: "0 0 20px rgba(255, 255, 255, 0.3)",
                     }}
-                  >
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#FF8C00] rounded-t-full">
-                      <div className="absolute w-12 h-6 bg-[#FF8C00]/20 rounded-full blur-md -top-2 -left-2" />
-                      <div className="absolute w-8 h-6 bg-[#FF8C00]/20 rounded-full blur-md -top-1" />
-                      <div className="absolute w-4 h-4 bg-[#FF8C00]/20 rounded-full blur-sm top-0 left-2" />
-                    </div>
-                  </motion.div>
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
                 )}
-              </a>
-            );
-          })}
+              </motion.a>
+            </PixelTrail>
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* モバイルメニュー */}
+      <AnimatePresence>
+        {isMobile && isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-40 bg-black/95 backdrop-blur-sm"
+          >
+            <div className="flex flex-col items-center justify-center h-full gap-8 p-4">
+              {items.map((item) => (
+                <motion.a
+                  key={item.name}
+                  href={item.url}
+                  onClick={(e) => handleClick(e, item)}
+                  className={cn(
+                    "relative px-6 py-3 text-lg font-medium transition-colors rounded-full",
+                    activeTab === item.name
+                      ? "text-white bg-white/10"
+                      : "text-white/75 hover:text-white hover:bg-white/5"
+                  )}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="flex items-center gap-3">
+                    <item.icon className="w-5 h-5" />
+                    {item.name}
+                  </span>
+                </motion.a>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
