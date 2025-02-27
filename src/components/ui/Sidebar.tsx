@@ -120,9 +120,9 @@ export const MobileSidebar = ({
                 className
               )}
             >
-              <div className="flex justify-between items-center p-4 border-b bg-white">
-                <div className="text-xl font-bold cursor-pointer" onClick={handleLogoClick}>
-                  <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-6" />
+              <div className="flex justify-between items-center p-4 border-b">
+                <div className="text-xl font-bold text-[#FF8C00] cursor-pointer" onClick={handleLogoClick}>
+                  <img src="irulogo-hidariue.svg" alt="IRUTOMO" className="h-6" />
                 </div>
                 <div
                   className="cursor-pointer text-[#FF8C00] hover:text-[#E67E00] transition-colors"

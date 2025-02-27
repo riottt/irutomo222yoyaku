@@ -216,13 +216,8 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
       {/* Header */}
       <header className="relative bg-gradient-to-r from-[#ff8b00] to-[#da1b60]">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-8" />
-            </div>
-          </div>
+          <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
         </div>
-        <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
       </header>
 
       {/* Hero Section */}

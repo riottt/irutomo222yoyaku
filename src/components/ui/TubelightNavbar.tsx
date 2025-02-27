@@ -107,7 +107,7 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
         <div className="flex items-center justify-between py-3">
           {/* Logo - クリックでホームに戻る */}
           <div className="cursor-pointer" onClick={goToHome}>
-            <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-8" />
+            <img src="irulogo-hidariue.svg" alt="IRUTOMO" className="h-8" />
           </div>
 
           {/* デスクトップメニュー - 常に表示 */}
@@ -154,50 +154,52 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
             })}
           </div>
 
-          {/* サイドバーメニュー */}
-          <Sidebar open={isMenuOpen} setOpen={setIsMenuOpen}>
-            <SidebarBody>
-              <div className="flex flex-col space-y-2">
-                {sidebarItems.map((item) => (
-                  <SidebarLink
-                    key={item.name}
-                    link={{
-                      name: item.name,
-                      url: item.url,
-                      icon: item.icon,
-                      onClick: item.onClick
-                    }}
-                    className={activeTab === item.name ? "bg-[#FFC458]/10 text-[#FF8C00]" : ""}
-                  />
-                ))}
-                
-                {/* 言語切り替えセクション - サイドバー内に表示 */}
-                <div className="mt-6 pt-6 border-t border-gray-100 px-6">
-                  <p className="text-sm text-gray-500 mb-3">言語を選択</p>
-                  <div className="flex flex-col space-y-2">
-                    <LanguageButton
-                      language={language}
-                      targetLang="en"
-                      label="English"
-                      onClick={() => handleLanguageChange("en")}
+          {/* ハンバーガーメニュー - 常に右上に表示 */}
+          <div className="flex items-center">
+            <Sidebar open={isMenuOpen} setOpen={setIsMenuOpen}>
+              <SidebarBody>
+                <div className="flex flex-col space-y-2">
+                  {sidebarItems.map((item) => (
+                    <SidebarLink
+                      key={item.name}
+                      link={{
+                        name: item.name,
+                        url: item.url,
+                        icon: item.icon,
+                        onClick: item.onClick
+                      }}
+                      className={activeTab === item.name ? "bg-[#FFC458]/10 text-[#FF8C00]" : ""}
                     />
-                    <LanguageButton
-                      language={language}
-                      targetLang="ja"
-                      label="日本語"
-                      onClick={() => handleLanguageChange("ja")}
-                    />
-                    <LanguageButton
-                      language={language}
-                      targetLang="ko"
-                      label="한국어"
-                      onClick={() => handleLanguageChange("ko")}
-                    />
+                  ))}
+                  
+                  {/* 言語切り替えセクション - サイドバー内に表示 */}
+                  <div className="mt-6 pt-6 border-t border-gray-100 px-6">
+                    <p className="text-sm text-gray-500 mb-3">言語を選択</p>
+                    <div className="flex flex-col space-y-2">
+                      <LanguageButton
+                        language={language}
+                        targetLang="en"
+                        label="English"
+                        onClick={() => handleLanguageChange("en")}
+                      />
+                      <LanguageButton
+                        language={language}
+                        targetLang="ja"
+                        label="日本語"
+                        onClick={() => handleLanguageChange("ja")}
+                      />
+                      <LanguageButton
+                        language={language}
+                        targetLang="ko"
+                        label="한국어"
+                        onClick={() => handleLanguageChange("ko")}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SidebarBody>
-          </Sidebar>
+              </SidebarBody>
+            </Sidebar>
+          </div>
         </div>
       </div>
     </nav>
