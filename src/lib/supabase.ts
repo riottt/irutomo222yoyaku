@@ -10,6 +10,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
+// 接続テスト用の関数
+export const testConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('restaurants').select('count()', { count: 'exact' });
+    if (error) {
+      console.error('Connection test error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('Connection successful! Database has data:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('Connection test exception:', error);
+    return { success: false, error };
+  }
+};
+
 export const signInWithEmail = async (email: string, password: string) => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({

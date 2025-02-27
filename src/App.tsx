@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LandingPage from './LandingPage';
 import RestaurantSearch from './RestaurantSearch';
 import ReservationInput from './components/ReservationInput';
 import RestaurantDetails from './components/RestaurantDetails';
 import StoreList from './components/StoreList';
+import { supabase, testConnection } from './lib/supabase';
 
 type Page = 'landing' | 'search' | 'details' | 'reservation' | 'stores';
 
@@ -11,6 +12,13 @@ function App() {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
   const [language, setLanguage] = useState<'ko' | 'ja'>('ko');
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // データベース接続テストを実行
+    testConnection().then(result => {
+      console.log('Connection test result:', result);
+    });
+  }, []);
 
   const handleReserveClick = () => {
     setCurrentPage('search');
