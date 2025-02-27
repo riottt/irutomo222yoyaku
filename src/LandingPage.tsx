@@ -130,54 +130,30 @@ const REVIEWS = {
 const OPTIONS = {
   ko: [
     {
-      title: '사진 촬영 요청',
-      price: 500,
-      description: '기념사진 촬영 및 SNS용 사진 촬영을 요청합니다.',
-      icon: Camera
+      title: '총 인원 1~4명 (성인, 어린이 포함 이용 인원)',
+      price: 1000
     },
     {
-      title: '코스 요리 상담',
-      price: 500,
-      description: '코스 요리의 구성이나 알레르기 대응에 대해 상담합니다.',
-      icon: UtensilsCrossed
+      title: '총 인원 5~8명 (성인, 어린이 포함 이용 인원)',
+      price: 2000
     },
     {
-      title: '특별한 날 이벤트',
-      price: 1000,
-      description: '생일이나 기념일을 위한 특별한 준비를 요청합니다.',
-      icon: Cake
-    },
-    {
-      title: '개인실 예약',
-      price: 1000,
-      description: '가능한 경우 개인실이나 특별석을 예약합니다.',
-      icon: DoorClosed
+      title: '총 인원 9~12명 (성인, 어린이 포함 이용 인원)',
+      price: 3000
     }
   ],
   ja: [
     {
-      title: '写真撮影リクエスト',
-      price: 500,
-      description: '記念写真やSNS用の写真撮影をリクエストします。',
-      icon: Camera
+      title: '合計人数1～4名（大人、子供含めたご利用人数）',
+      price: 1000
     },
     {
-      title: 'コース料理相談',
-      price: 500,
-      description: 'コース料理の構成やアレルギー対応について相談します。',
-      icon: UtensilsCrossed
+      title: '合計人数5～8名（大人、子供含めたご利用人数）',
+      price: 2000
     },
     {
-      title: '特別な日のイベント',
-      price: 1000,
-      description: '誕生日や記念日のための特別な準備をリクエストします。',
-      icon: Cake
-    },
-    {
-      title: '個室予約',
-      price: 1000,
-      description: '可能な場合、個室や特別席を予約します。',
-      icon: DoorClosed
+      title: '合計人数9～12名（大人、子供含めたご利用人数）',
+      price: 3000
     }
   ]
 };
@@ -425,12 +401,8 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
                 className="bg-white rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
               >
                 <div className="flex items-start gap-4">
-                  <div className="bg-[#FF8C00]/10 p-3 rounded-full">
-                    <option.icon className="w-6 h-6 text-[#FF8C00]" />
-                  </div>
                   <div>
                     <h3 className="font-semibold text-lg mb-2">{option.title}</h3>
-                    <p className="text-gray-600 mb-4">{option.description}</p>
                     <p className="text-[#FF8C00] font-semibold">
                       ¥{option.price.toLocaleString()}
                     </p>
