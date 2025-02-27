@@ -39,6 +39,9 @@ export default function PaymentModal({ isOpen, onClose, onComplete, amount, lang
       
       // デバッグ情報
       console.log('PayPal Client ID (partial):', paypalClientId.substring(0, 10) + '...');
+      console.log('PayPal Client ID (full):', paypalClientId);
+      console.log('Amount in JPY:', amount);
+      console.log('Amount in USD (approximate):', amountUSD);
       
       // SDKの読み込みエラーを検出するためのタイムアウト（10秒に延長）
       const timer = setTimeout(() => {
@@ -244,8 +247,7 @@ export default function PaymentModal({ isOpen, onClose, onComplete, amount, lang
                     "client-id": paypalClientId,
                     currency: "USD",
                     intent: "capture",
-                    "data-client-token": "YOUR_CLIENT_TOKEN", // オプション
-                    components: "buttons" // 明示的にボタンコンポーネントのみ読み込む
+                    components: "buttons",
                   }}
                   onError={(err) => {
                     console.error('PayPal SDK load error:', err);
@@ -265,7 +267,6 @@ export default function PaymentModal({ isOpen, onClose, onComplete, amount, lang
                       shape: "rect",
                       label: "pay"
                     }}
-                    forceReRender={[amount, language]}
                     createOrder={(_data, actions) => {
                       console.log('Creating PayPal order:', amountUSD);
                       return actions.order.create({
