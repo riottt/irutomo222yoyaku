@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, Clock, Users, Mail } from 'lucide-react';
+import { Calendar, Clock, Users, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Restaurant } from '../types/supabase';
 import PaymentModal from './PaymentModal';
@@ -11,6 +12,7 @@ interface ReservationInputProps {
 }
 
 export default function ReservationInput({ restaurantId, language, onBack }: ReservationInputProps) {
+  const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState('');
@@ -88,32 +90,34 @@ export default function ReservationInput({ restaurantId, language, onBack }: Res
   const handlePaymentComplete = async () => {
     setIsSubmitting(true);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('User not authenticated');
-
+      // Guest reservation (no authentication required)
+      // Generate a unique reservation ID
       const reservationDate = new Date(`${date}T${time}`);
-      const { error: reservationError } = await supabase
+      const { data, error: reservationError } = await supabase
         .from('reservations')
         .insert([{
-          user_id: user.id,
           restaurant_id: restaurantId,
-          reservation_date: reservationDate.toISOString(),
+          reservation_date: date,
+          reservation_time: time,
           party_size: parseInt(partySize),
+          name: email.split('@')[0], // Use part of email as name for simplicity
+          email: email,
           status: 'pending',
           payment_status: 'completed',
           payment_amount: 1000
-        }]);
+        }])
+        .select();
 
       if (reservationError) throw reservationError;
 
-      // Simulate email sending
-      console.log('Sending confirmation email to:', email);
-      
-      alert(language === 'ko'
-        ? '예약이 완료되었습니다!\n\n예약 확인 메일이 발송되었습니다.\n담당자가 확인 후 24시간 이내에 연락드리겠습니다.'
-        : '予約が完了しました！\n\n予約確認メールを送信しました。\n担当者が確認後、24時間以内にご連絡いたします。');
-
-      onBack();
+      // Send to confirmation page with reservation ID
+      if (data && data.length > 0) {
+        const reservationId = data[0].id;
+        // Navigate to success page with reservation ID
+        navigate(`/reservation-success/${reservationId}`);
+      } else {
+        throw new Error('No reservation data returned');
+      }
     } catch (error) {
       console.error('Error creating reservation:', error);
       alert(language === 'ko'
@@ -127,7 +131,7 @@ export default function ReservationInput({ restaurantId, language, onBack }: Res
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF8C00] border-t-transparent"></div>
       </div>
     );
@@ -135,7 +139,7 @@ export default function ReservationInput({ restaurantId, language, onBack }: Res
 
   if (!restaurant) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <p className="text-gray-600">
           {language === 'ko' 
             ? '레스토랑 정보를 찾을 수 없습니다' 
@@ -146,26 +150,7 @@ export default function ReservationInput({ restaurantId, language, onBack }: Res
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={onBack}
-              className="flex items-center text-gray-600 hover:text-[#FF8C00] transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 mr-1" />
-              {language === 'ko' ? '뒤로' : '戻る'}
-            </button>
-            <h1 className="text-2xl font-bold text-[#FF8C00]">
-              {language === 'ko' ? '예약 정보 입력' : '予約情報入力'}
-            </h1>
-            <div className="w-5" /> {/* Spacer for alignment */}
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-white">
       <div className="container mx-auto px-4 py-6">
         {/* Restaurant Summary */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -312,15 +297,6 @@ export default function ReservationInput({ restaurantId, language, onBack }: Res
           </div>
         </form>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-gray-50 mt-8 border-t border-gray-200">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <a href="#contact" className="text-[#FF8C00] hover:text-orange-600 transition-colors">
-            {language === 'ko' ? '궁금한 점은 문의하기' : 'ご不明な点はお問い合わせ'}
-          </a>
-        </div>
-      </footer>
 
       {/* Payment Modal */}
       <PaymentModal

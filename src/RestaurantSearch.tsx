@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, MapPin, Star, Info, Store, AlertCircle, Settings } from 'lucide-react';
+import { Search, MapPin, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import type { Restaurant } from './types/supabase';
 import DirectRequestModal from './components/DirectRequestModal';
-import { TubelightNavbar } from './components/ui/TubelightNavbar';
-import { LanguageToggle } from './components/ui/LanguageToggle';
 
 // Restaurant type images based on cuisine
 const CUISINE_IMAGES = {
@@ -42,13 +41,12 @@ const CUISINE_IMAGES = {
 };
 
 interface RestaurantSearchProps {
-  language: 'ko' | 'ja';
-  onBack: () => void;
-  onSelect: (restaurantId: string) => void;
-  onLanguageToggle: () => void;
+  language: 'ko' | 'ja' | 'en';
+  onSelectRestaurant: (restaurantId: string) => void;
 }
 
-export default function RestaurantSearch({ language, onBack, onSelect, onLanguageToggle }: RestaurantSearchProps) {
+export default function RestaurantSearch({ language, onSelectRestaurant }: RestaurantSearchProps) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDirectRequestModalOpen, setIsDirectRequestModalOpen] = useState(false);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -59,29 +57,6 @@ export default function RestaurantSearch({ language, onBack, onSelect, onLanguag
   useEffect(() => {
     fetchRestaurants();
   }, []);
-
-  const NAV_ITEMS = [
-    {
-      name: language === 'ko' ? '서비스 소개' : 'サービス紹介',
-      url: '#service',
-      icon: Info,
-    },
-    {
-      name: language === 'ko' ? '옵션' : 'オプション',
-      url: '#options',
-      icon: Settings,
-    },
-    {
-      name: language === 'ko' ? '주의사항' : '注意事項',
-      url: '#caution',
-      icon: AlertCircle,
-    },
-    {
-      name: language === 'ko' ? '점포 정보' : '店舗情報',
-      url: '#stores',
-      icon: Store,
-    },
-  ];
 
   const fetchRestaurants = async () => {
     try {
@@ -94,7 +69,7 @@ export default function RestaurantSearch({ language, onBack, onSelect, onLanguag
       setRestaurants(data || []);
     } catch (error) {
       console.error('Error fetching restaurants:', error);
-      alert(language === 'ko' ? '데이터 로딩 중 오류가 발생했습니다' : 'データの読み込み中にエラーが発生しました');
+      alert(language === 'ko' ? '데이터 로딩 중 오류가 발생했습니다' : language === 'ja' ? 'データの読み込み中にエラーが発生しました' : 'Error loading data');
     } finally {
       setIsLoading(false);
     }
@@ -128,42 +103,24 @@ export default function RestaurantSearch({ language, onBack, onSelect, onLanguag
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <button
-                onClick={onBack}
-                className="flex items-center text-gray-600 hover:text-[#FF8C00] transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 mr-1" />
-                {language === 'ko' ? '뒤로' : '戻る'}
-              </button>
-            </div>
-            <h1 className="text-xl font-bold text-[#FF8C00]">
-              {language === 'ko' ? '레스토랑 찾기' : 'レストラン検索'}
-            </h1>
-            <LanguageToggle
-              language={language}
-              onToggle={onLanguageToggle}
-              className="relative"
-            />
-          </div>
-        </div>
-        <TubelightNavbar items={NAV_ITEMS} language={language} />
-      </header>
+  const handleSelectRestaurant = (restaurantId: string) => {
+    // Call the provided onSelectRestaurant function
+    onSelectRestaurant(restaurantId);
+    
+    // Navigate to the restaurant details page
+    navigate(`/restaurant-details/${restaurantId}`);
+  };
 
+  return (
+    <div className="bg-white">
       {/* Search Section */}
-      <section className="py-8 bg-gray-50 sticky top-[104px] z-40">
+      <section className="py-8 bg-gray-50 sticky top-16 z-40">
         <div className="container mx-auto px-4">
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="flex-1">
               <input
                 type="text"
-                placeholder={language === 'ko' ? '오사카 맛집 검색' : '大阪のグルメを検索'}
+                placeholder={language === 'ko' ? '오사카 맛집 검색' : language === 'ja' ? '大阪のグルメを検索' : 'Search Osaka restaurants'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent"
@@ -220,13 +177,13 @@ export default function RestaurantSearch({ language, onBack, onSelect, onLanguag
                           className="flex items-center text-[#FF8C00] hover:text-orange-600 transition-colors"
                         >
                           <MapPin className="w-4 h-4 mr-1" />
-                          {language === 'ko' ? '지도에서 보기' : '地図で見る'}
+                          {language === 'ko' ? '지도에서 보기' : language === 'ja' ? '地図で見る' : 'View on Map'}
                         </button>
                         <button
-                          onClick={() => onSelect(restaurant.id)}
+                          onClick={() => handleSelectRestaurant(restaurant.id.toString())}
                           className="px-4 py-2 bg-[#FF8C00] text-white rounded hover:brightness-110 transition-all"
                         >
-                          {language === 'ko' ? '선택' : '選択'}
+                          {language === 'ko' ? '선택' : language === 'ja' ? '選択' : 'Select'}
                         </button>
                       </div>
                     </div>
@@ -261,7 +218,7 @@ export default function RestaurantSearch({ language, onBack, onSelect, onLanguag
               onClick={() => setIsDirectRequestModalOpen(true)}
               className="px-6 py-3 bg-[#FF8C00] text-white rounded-lg hover:brightness-110 transition-all"
             >
-              {language === 'ko' ? '직접 요청하기' : '直接リクエスト'}
+              {language === 'ko' ? '직접 요청하기' : language === 'ja' ? '直接リクエスト' : 'Direct Request'}
             </button>
           </div>
         </div>
@@ -273,15 +230,6 @@ export default function RestaurantSearch({ language, onBack, onSelect, onLanguag
         onClose={() => setIsDirectRequestModalOpen(false)}
         language={language}
       />
-
-      {/* Footer */}
-      <footer className="bg-gray-50 border-t mt-8">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <a href="#contact" className="text-[#FF8C00] hover:text-orange-600 transition-colors">
-            {language === 'ko' ? '궁금한 점은 문의하기' : 'ご不明な点はお問い合わせ'}
-          </a>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Home, Info, CreditCard, Clock, MapPin, Calendar } from 'lucide-react';
+import { Home, Info, CreditCard, Clock, MapPin, Calendar, Settings } from 'lucide-react';
 
 // 共通ナビゲーションアイテムの定義
 export const getCommonNavItems = (language: 'ko' | 'ja' | 'en', goToFunctions: {
@@ -7,10 +7,12 @@ export const getCommonNavItems = (language: 'ko' | 'ja' | 'en', goToFunctions: {
   goToCautions: () => void;
   goToStoreInfo: () => void;
   goToReviews: () => void;
+  goToAdmin?: () => void; // 管理者ダッシュボードへの遷移関数（オプション）
 }) => {
-  const { goToServiceIntroduction, goToOptions, goToCautions, goToStoreInfo, goToReviews } = goToFunctions;
+  const { goToServiceIntroduction, goToOptions, goToCautions, goToStoreInfo, goToReviews, goToAdmin } = goToFunctions;
   
-  return [
+  // 基本のナビゲーションアイテム
+  const navItems = [
     {
       name: language === 'ko' ? '서비스 소개' : language === 'ja' ? 'サービス紹介' : 'Service Introduction',
       url: '/service-introduction',
@@ -40,6 +42,18 @@ export const getCommonNavItems = (language: 'ko' | 'ja' | 'en', goToFunctions: {
       url: '/reviews',
       icon: Calendar,
       onClick: goToReviews
-    },
+    }
   ];
+  
+  // 管理者ダッシュボードへのリンクを追加
+  if (goToAdmin) {
+    navItems.push({
+      name: language === 'ko' ? '관리자 대시보드' : language === 'ja' ? '管理者ダッシュボード' : 'Admin Dashboard',
+      url: '/admin',
+      icon: Settings,
+      onClick: goToAdmin
+    });
+  }
+  
+  return navItems;
 }; 

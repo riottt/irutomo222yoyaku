@@ -5,7 +5,7 @@ import RestaurantDetails from './components/RestaurantDetails';
 import ReservationInput from './components/ReservationInput';
 import StoreList from './components/StoreList';
 import { supabase, testConnection } from './lib/supabase';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Outlet } from 'react-router-dom';
 import ServiceIntroduction from './pages/ServiceIntroduction';
 import Options from './pages/Options';
 import Cautions from './pages/Cautions';
@@ -13,15 +13,14 @@ import StoreInfo from './pages/StoreInfo';
 import Reviews from './pages/Reviews';
 import { TubelightNavbar } from './components/ui/TubelightNavbar';
 import { getCommonNavItems } from './lib/navigation';
+import AdminDashboard from './pages/AdminDashboard';
+import ReservationSuccess from './pages/ReservationSuccess';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import CommercialTransactions from './pages/CommercialTransactions';
+import Footer from './components/Footer';
 
 // 改良された共通レイアウトコンポーネント
-function PageWithNavigation({ 
-  Component, 
-  language, 
-  onLanguageChange, 
-  restaurantId = null,
-  onSelect = null
-}) {
+function PageWithNavigation({ language, onLanguageChange }) {
   const navigate = useNavigate();
   
   // 各ページへの共通遷移関数
@@ -30,6 +29,7 @@ function PageWithNavigation({
   const goToCautions = () => navigate('/cautions');
   const goToStoreInfo = () => navigate('/store-info');
   const goToReviews = () => navigate('/reviews');
+  const goToAdmin = () => navigate('/admin');
   
   // 共通ナビゲーションアイテム
   const NAV_ITEMS = getCommonNavItems(language, {
@@ -37,11 +37,12 @@ function PageWithNavigation({
     goToOptions,
     goToCautions,
     goToStoreInfo,
-    goToReviews
+    goToReviews,
+    goToAdmin
   });
   
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* 共通ヘッダー */}
       <TubelightNavbar 
         items={NAV_ITEMS} 
@@ -52,27 +53,65 @@ function PageWithNavigation({
       {/* ヘッダーの高さ分のスペースを確保 */}
       <div className="h-16 md:h-16"></div>
       
-      {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 py-6">
-        <Component 
-          language={language} 
-          onLanguageChange={onLanguageChange} 
-          onBack={() => navigate('/')}
-          restaurantId={restaurantId}
-          onSelect={onSelect}
-        />
+      {/* メインコンテンツ - Outletを使用して子ルートのコンポーネントをレンダリング */}
+      <main className="container mx-auto px-4 py-6 flex-grow">
+        <Outlet />
       </main>
+      
+      {/* 共通フッター */}
+      <Footer language={language} />
     </div>
   );
 }
 
+// 個別ページのラッパー
+function StandalonePageWrapper({ language, Component }) {
+  return (
+    <>
+      <Component language={language} />
+      <Footer language={language} />
+    </>
+  );
+}
+
+function RestaurantSearchWrapper({ language, onSelectRestaurant }) {
+  const navigate = useNavigate();
+  
+  // レストラン選択時の処理をラップする
+  const handleRestaurantSelect = (id) => {
+    // 親コンポーネントの処理を呼び出す
+    onSelectRestaurant(id);
+    
+    // 詳細ページへの遷移はRestaurantSearch内部で行われるため、ここでは何もしない
+  };
+  
+  return <RestaurantSearch 
+    language={language} 
+    onSelectRestaurant={handleRestaurantSelect} 
+  />;
+}
+
+function ReservationInputWrapper({ language, restaurantId }) {
+  const navigate = useNavigate();
+  return <ReservationInput 
+    language={language} 
+    restaurantId={restaurantId} 
+    onBack={() => navigate(-1)} 
+  />;
+}
+
+function AdminDashboardWrapper({ language }) {
+  const navigate = useNavigate();
+  return <AdminDashboard language={language} onBack={() => navigate('/')} />;
+}
+
 function App() {
-  // デフォルト言語を日本語に設定 - 英語でホワイトアウトする問題を回避
-  const [language, setLanguage] = useState<'ko' | 'ja' | 'en'>('ja');
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
+  const [currentLanguage, setCurrentLanguage] = useState<'ko' | 'ja' | 'en'>('ko');
+  const [restaurantId, setRestaurantId] = useState<number | null>(null);
 
   const handleRestaurantSelect = (id: string) => {
-    setSelectedRestaurantId(id);
+    console.log('Restaurant selected:', id);
+    setRestaurantId(parseInt(id));
   };
 
   // 言語切り替え処理の安全対策を強化
@@ -88,11 +127,11 @@ function App() {
       }
       
       // 実際の言語切り替え
-      setLanguage(lang);
+      setCurrentLanguage(lang);
     } catch (error) {
       console.error('言語切り替えエラー:', error);
       // エラー時はデフォルト言語に戻す
-      setLanguage('ja');
+      setCurrentLanguage('ko');
       
       // ユーザーに通知（開発用）
       console.warn('言語切り替えに失敗しました。デフォルト言語に戻します。');
@@ -106,10 +145,10 @@ function App() {
 
   // 言語変更後の副作用を追加・強化
   useEffect(() => {
-    console.log('言語が変更されました:', language);
+    console.log('言語が変更されました:', currentLanguage);
     
     // document言語の設定
-    document.documentElement.lang = language;
+    document.documentElement.lang = currentLanguage;
     
     // テキストが表示されないバグへの対応として、必要なリソースを確認
     const ensureLanguageResources = () => {
@@ -121,115 +160,68 @@ function App() {
     };
     
     ensureLanguageResources();
-  }, [language]);
+  }, [currentLanguage]);
+
+  // AppWrapper関数を作成してnavigateを使用
+  function AppRoutes() {
+    const navigate = useNavigate();
+    
+    return (
+      <Routes>
+        {/* スタンドアロンページ */}
+        <Route path="/" element={
+          <>
+            <LandingPage language={currentLanguage} onLanguageChange={handleLanguageChange} />
+            <Footer language={currentLanguage} />
+          </>
+        } />
+        
+        <Route path="/privacy-policy" element={
+          <StandalonePageWrapper 
+            language={currentLanguage} 
+            Component={PrivacyPolicy} 
+          />
+        } />
+        
+        <Route path="/commercial-transactions" element={
+          <StandalonePageWrapper 
+            language={currentLanguage} 
+            Component={CommercialTransactions} 
+          />
+        } />
+        
+        {/* 共通レイアウトを使用するページ */}
+        <Route element={<PageWithNavigation language={currentLanguage} onLanguageChange={handleLanguageChange} />}>
+          <Route path="/service-introduction" element={<ServiceIntroduction language={currentLanguage} />} />
+          <Route path="/options" element={<Options language={currentLanguage} />} />
+          <Route path="/cautions" element={<Cautions language={currentLanguage} />} />
+          <Route path="/store-info" element={<StoreInfo language={currentLanguage} />} />
+          <Route path="/reviews" element={<Reviews language={currentLanguage} />} />
+          <Route path="/restaurant-search" element={
+            <RestaurantSearchWrapper 
+              language={currentLanguage} 
+              onSelectRestaurant={handleRestaurantSelect} 
+            />
+          } />
+          <Route path="/restaurant-details/:id" element={<RestaurantDetails language={currentLanguage} />} />
+          <Route path="/reservation-input/:id" element={
+            <ReservationInputWrapper 
+              language={currentLanguage} 
+              restaurantId={restaurantId} 
+            />
+          } />
+          <Route path="/reservation-success/:reservationId" element={<ReservationSuccess language={currentLanguage} />} />
+          <Route path="/admin" element={<AdminDashboardWrapper language={currentLanguage} />} />
+          <Route path="/stores" element={<StoreList language={currentLanguage} />} />
+        </Route>
+      </Routes>
+    );
+  }
 
   return (
     <Router>
-      <div className="min-h-screen bg-white">
-        <Routes>
-          <Route 
-            path="/" 
-            element={
-              <LandingPage 
-                language={language} 
-                onLanguageChange={handleLanguageChange} 
-              />
-            } 
-          />
-          <Route 
-            path="/service-introduction" 
-            element={
-              <PageWithNavigation 
-                Component={ServiceIntroduction} 
-                language={language} 
-                onLanguageChange={handleLanguageChange}
-              />
-            } 
-          />
-          <Route 
-            path="/options" 
-            element={
-              <PageWithNavigation 
-                Component={Options} 
-                language={language} 
-                onLanguageChange={handleLanguageChange} 
-              />
-            } 
-          />
-          <Route 
-            path="/cautions" 
-            element={
-              <PageWithNavigation 
-                Component={Cautions} 
-                language={language} 
-                onLanguageChange={handleLanguageChange} 
-              />
-            } 
-          />
-          <Route 
-            path="/store-info" 
-            element={
-              <PageWithNavigation 
-                Component={StoreInfo} 
-                language={language} 
-                onLanguageChange={handleLanguageChange} 
-              />
-            } 
-          />
-          <Route 
-            path="/reviews" 
-            element={
-              <PageWithNavigation 
-                Component={Reviews} 
-                language={language} 
-                onLanguageChange={handleLanguageChange} 
-              />
-            } 
-          />
-          <Route 
-            path="/search" 
-            element={
-              <PageWithNavigation
-                Component={RestaurantSearch}
-                language={language} 
-                onLanguageChange={handleLanguageChange}
-                onSelect={handleRestaurantSelect}
-              />
-            } 
-          />
-          <Route 
-            path="/details/:restaurantId" 
-            element={
-              <PageWithNavigation
-                Component={RestaurantDetails}
-                restaurantId={selectedRestaurantId || ''}
-                language={language}
-                onLanguageChange={handleLanguageChange}
-              />
-            } 
-          />
-          <Route 
-            path="/reservation/:restaurantId" 
-            element={
-              <PageWithNavigation
-                Component={ReservationInput}
-                restaurantId={selectedRestaurantId || ''}
-                language={language}
-                onLanguageChange={handleLanguageChange}
-              />
-            } 
-          />
-          <Route 
-            path="/stores" 
-            element={
-              <PageWithNavigation
-                Component={StoreList}
-                language={language}
-                onLanguageChange={handleLanguageChange}
-              />
-            } 
-          />
-        </Routes>
+      <div className="min-h-screen bg-white flex flex-col">
+        <AppRoutes />
         <div className="fixed bottom-4 right-4 z-50">
           <button
             className="bg-pink-500 text-white p-3 rounded-full shadow-lg hover:bg-pink-600 transition-colors duration-300"
