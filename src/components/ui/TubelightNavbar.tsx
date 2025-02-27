@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { DivideIcon as LucideIcon, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { DivideIcon as LucideIcon, Globe, Home, Info, AlertCircle, Store, Star } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useScreenSize } from "../hooks/use-screen-size";
-import { PixelTrail } from "./PixelTrail";
+import { Sidebar, SidebarBody, SidebarLink, LanguageButton } from "./Sidebar";
 
 interface NavItem {
   name: string;
   url: string;
-  icon: LucideIcon;
+  icon: any;
   onClick?: () => void;
 }
 
 interface NavBarProps {
   items: NavItem[];
   className?: string;
-  language: 'ko' | 'ja';
+  language: 'ko' | 'ja' | 'en';
+  onLanguageChange?: (lang: 'ko' | 'ja' | 'en') => void;
 }
 
-export function TubelightNavbar({ items, className, language }: NavBarProps) {
+export function TubelightNavbar({ items, className, language, onLanguageChange }: NavBarProps) {
   const [activeTab, setActiveTab] = useState(items[0].name);
   const [isMobile, setIsMobile] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,30 +51,39 @@ export function TubelightNavbar({ items, className, language }: NavBarProps) {
     }
   };
 
+  // 言語切り替えハンドラー
+  const handleLanguageChange = (lang: 'ko' | 'ja' | 'en') => {
+    if (onLanguageChange) {
+      onLanguageChange(lang);
+    }
+  };
+
+  // サイドバー用のナビゲーションアイテム
+  const sidebarItems = items.map(item => ({
+    name: item.name,
+    url: item.url,
+    icon: <item.icon size={20} />,
+    onClick: (e: any) => {
+      e.preventDefault();
+      setActiveTab(item.name);
+      if (item.onClick) {
+        item.onClick();
+      } else if (item.url.startsWith('#')) {
+        const element = document.querySelector(item.url);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+      setIsMenuOpen(false);
+    }
+  }));
+
   return (
     <nav className="relative bg-white border-b overflow-hidden">
-      <div className="absolute inset-0">
-        <PixelTrail
-          pixelSize={screenSize.lessThan("md") ? 24 : 40}
-          fadeDuration={800}
-          delay={200}
-          pixelClassName="rounded-full bg-[#FF8C00]/10"
-        />
-      </div>
       <div className="container mx-auto px-4 relative">
         <div className="flex items-center justify-between py-3">
-          {/* ハンバーガーメニューボタン - モバイル時のみ表示 */}
-          {isMobile && (
-            <button 
-              className="text-gray-600 hover:text-[#FF8C00] z-10"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          )}
-          
-          {/* デスクトップメニュー - モバイル時は非表示 */}
-          <div className={cn("flex-1 items-center justify-center gap-3", isMobile ? "hidden" : "flex")}>
+          {/* デスクトップメニュー - 常に表示 */}
+          <div className="flex-1 items-center justify-center gap-3 flex">
             {items.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.name;
@@ -115,55 +125,53 @@ export function TubelightNavbar({ items, className, language }: NavBarProps) {
               );
             })}
           </div>
+
+          {/* サイドバーメニュー */}
+          <Sidebar open={isMenuOpen} setOpen={setIsMenuOpen}>
+            <SidebarBody>
+              <div className="flex flex-col space-y-2">
+                {sidebarItems.map((item) => (
+                  <SidebarLink
+                    key={item.name}
+                    link={{
+                      name: item.name,
+                      url: item.url,
+                      icon: item.icon,
+                      onClick: item.onClick
+                    }}
+                    className={activeTab === item.name ? "bg-[#FFC458]/10 text-[#FF8C00]" : ""}
+                  />
+                ))}
+                
+                {/* 言語切り替えセクション - サイドバー内に表示 */}
+                <div className="mt-6 pt-6 border-t border-gray-100 px-6">
+                  <p className="text-sm text-gray-500 mb-3">言語を選択</p>
+                  <div className="flex flex-col space-y-2">
+                    <LanguageButton
+                      language={language}
+                      targetLang="en"
+                      label="English"
+                      onClick={() => handleLanguageChange("en")}
+                    />
+                    <LanguageButton
+                      language={language}
+                      targetLang="ja"
+                      label="日本語"
+                      onClick={() => handleLanguageChange("ja")}
+                    />
+                    <LanguageButton
+                      language={language}
+                      targetLang="ko"
+                      label="한국어"
+                      onClick={() => handleLanguageChange("ko")}
+                    />
+                  </div>
+                </div>
+              </div>
+            </SidebarBody>
+          </Sidebar>
         </div>
       </div>
-
-      {/* モバイル用サイドメニュー */}
-      {isMobile && (
-        <motion.div 
-          className={cn(
-            "fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 py-20 px-4",
-            isMenuOpen ? "block" : "hidden"
-          )}
-          initial={{ x: -300 }}
-          animate={{ x: isMenuOpen ? 0 : -300 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex flex-col space-y-6">
-            {items.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.name;
-
-              return (
-                <a
-                  key={item.name}
-                  href={item.url}
-                  onClick={(e) => handleClick(e, item)}
-                  className={cn(
-                    "flex items-center space-x-3 text-base font-medium px-4 py-2 rounded-md transition-colors",
-                    "text-gray-700 hover:bg-[#FF8C00]/10 hover:text-[#FF8C00]",
-                    isActive && "bg-[#FF8C00]/10 text-[#FF8C00]",
-                  )}
-                >
-                  <Icon size={20} strokeWidth={2} />
-                  <span>{item.name}</span>
-                </a>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-      
-      {/* バックドロップ - モバイルメニュー開放時のみ表示 */}
-      {isMobile && isMenuOpen && (
-        <motion.div 
-          className="fixed inset-0 bg-black/30 z-40"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
     </nav>
   );
 }

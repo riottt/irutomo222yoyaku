@@ -1,15 +1,14 @@
-import React, { useEffect } from 'react';
-import { Globe, Phone, Clock, CreditCard, Info, Store, Star, AlertCircle, Settings, XCircle, Camera, UtensilsCrossed, Cake, DoorClosed } from 'lucide-react';
-import { LanguageToggle } from './components/ui/LanguageToggle';
+import React, { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { Globe, Phone, Clock, CreditCard, Info, Store, Star, AlertCircle, Settings, XCircle, Camera, UtensilsCrossed, Cake, DoorClosed, MapPin, Calendar } from 'lucide-react';
 import { ParticleButton } from './components/ui/particle-button';
 import { renderCanvas } from './components/ui/canvas';
 import { TubelightNavbar } from './components/ui/TubelightNavbar';
 
 interface LandingPageProps {
-  language: 'ko' | 'ja';
-  onLanguageToggle: () => void;
-  onReserveClick: () => void;
-  onStoreListClick: () => void;
+  language: 'ko' | 'ja' | 'en';
+  onLanguageChange: (lang: 'ko' | 'ja' | 'en') => void;
 }
 
 const FOOD_IMAGES = [
@@ -158,41 +157,51 @@ const OPTIONS = {
   ]
 };
 
-export default function LandingPage({ language, onLanguageToggle, onReserveClick, onStoreListClick }: LandingPageProps) {
+export default function LandingPage({ language, onLanguageChange }: LandingPageProps) {
+  const navigate = useNavigate();
+
+  const goToServiceIntroduction = () => navigate('/service-introduction');
+  const goToOptions = () => navigate('/options');
+  const goToCautions = () => navigate('/cautions');
+  const goToStoreInfo = () => navigate('/store-info');
+  const goToReviews = () => navigate('/reviews');
+  const goToSearch = () => navigate('/search');
+  const goToStores = () => navigate('/stores');
+
   useEffect(() => {
     renderCanvas();
   }, []);
 
   const NAV_ITEMS = [
     {
-      name: language === 'ko' ? '서비스 소개' : 'サービス紹介',
+      name: language === 'ko' ? '서비스 소개' : language === 'ja' ? 'サービス紹介' : 'Service Introduction',
       url: '#service',
       icon: Info,
-      onClick: () => document.querySelector('#service')?.scrollIntoView({ behavior: 'smooth' })
+      onClick: goToServiceIntroduction
     },
     {
-      name: language === 'ko' ? '옵션' : 'オプション',
+      name: language === 'ko' ? '옵션' : language === 'ja' ? 'オプション' : 'Options',
       url: '#options',
-      icon: Settings,
-      onClick: () => document.querySelector('#options')?.scrollIntoView({ behavior: 'smooth' })
+      icon: CreditCard,
+      onClick: goToOptions
     },
     {
-      name: language === 'ko' ? '주의사항' : '注意事項',
-      url: '#caution',
-      icon: AlertCircle,
-      onClick: () => document.querySelector('#caution')?.scrollIntoView({ behavior: 'smooth' })
+      name: language === 'ko' ? '주의사항' : language === 'ja' ? '注意事項' : 'Cautions',
+      url: '#cautions',
+      icon: Clock,
+      onClick: goToCautions
     },
     {
-      name: language === 'ko' ? '점포 정보' : '店舗情報',
+      name: language === 'ko' ? '점포 정보' : language === 'ja' ? '店舗情報' : 'Store Info',
       url: '#stores',
-      icon: Store,
-      onClick: onStoreListClick
+      icon: MapPin,
+      onClick: goToStoreInfo
     },
     {
-      name: language === 'ko' ? '리뷰' : 'レビュー',
+      name: language === 'ko' ? '리뷰' : language === 'ja' ? 'レビュー' : 'Reviews',
       url: '#reviews',
-      icon: Star,
-      onClick: () => document.querySelector('#reviews')?.scrollIntoView({ behavior: 'smooth' })
+      icon: Calendar,
+      onClick: goToReviews
     },
   ];
 
@@ -205,22 +214,15 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
       ></canvas>
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
+      <header className="relative bg-gradient-to-r from-[#ff8b00] to-[#da1b60]">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <span className="text-xl font-bold text-[#FF8C00]">IRUTOMO</span>
+              <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-8" />
             </div>
-            <nav className="flex items-center space-x-6">
-              <LanguageToggle
-                language={language}
-                onToggle={onLanguageToggle}
-                className="relative"
-              />
-            </nav>
           </div>
         </div>
-        <TubelightNavbar items={NAV_ITEMS} language={language} />
+        <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
       </header>
 
       {/* Hero Section */}
@@ -230,19 +232,23 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
             <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
               {language === 'ko'
                 ? '일본 전화번호 없이도\n원하는 맛집 예약 가능!'
+                : language === 'ja'
+                ? '日本の電話番号がなくても\n行きたいお店を予約可能！'
                 : '日本の電話番号がなくても\n行きたいお店を予約可能！'}
             </h1>
             <p className="text-gray-600 text-lg mb-8">
               {language === 'ko'
                 ? '일본의 인기 레스토랑은 전화로만 예약이 가능한 경우가 많습니다.\nIRUTOMO가 여러분의 맛있는 여행을 도와드립니다.'
-                : '日本の人気店は電話予約のみの場合が多いです。\nIRUTOMOがあなたの美味しい旅をサポートします。'}
+                : language === 'ja'
+                ? '日本の人気店は電話予約のみの場合が多いです。\nIRUTOMOがあなたの美味しい旅をサポートします。'
+                : '일본의 인기 레스토랑은 전화로만 예약이 가능한 경우가 많습니다.\nIRUTOMO가 여러분의 맛있는 여행을 도와드립니다.'}
             </p>
             <ParticleButton
-              onClick={onReserveClick}
+              onClick={goToSearch}
               size="lg"
               className="font-bold text-lg"
             >
-              {language === 'ko' ? '지금 예약하기' : '今すぐ予約'}
+              {language === 'ko' ? '지금 예약하기' : language === 'ja' ? '今すぐ予約' : 'Book Now'}
             </ParticleButton>
           </div>
 
@@ -273,12 +279,14 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
                 <Phone className="w-8 h-8 text-[#FF8C00]" />
               </div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '전화 예약 대행' : '電話予約代行'}
+                {language === 'ko' ? '전화 예약 대행' : language === 'ja' ? '電話予約代行' : '電話予約代行'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '일본 전화번호가 없어도 예약 가능'
-                  : '日本の電話番号がなくても予約可能'}
+                  : language === 'ja'
+                  ? '日本の電話番号がなくても予約可能'
+                  : '일본 전화번호가 없어도 예약 가능'}
               </p>
             </div>
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
@@ -286,12 +294,14 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
                 <Globe className="w-8 h-8 text-[#FF8C00]" />
               </div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '한국어 지원' : '韓国語サポート'}
+                {language === 'ko' ? '한국어 지원' : language === 'ja' ? '韓国語サポート' : '한국어 지원'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '모든 서비스를 한국어로 이용'
-                  : 'すべてのサービスを韓国語で利用'}
+                  : language === 'ja'
+                  ? 'すべてのサービスを韓国語で利用'
+                  : '모든 서비스를 한국어로 이용'}
               </p>
             </div>
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
@@ -299,12 +309,14 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
                 <Clock className="w-8 h-8 text-[#FF8C00]" />
               </div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '빠른 예약' : '迅速な予約'}
+                {language === 'ko' ? '빠른 예약' : language === 'ja' ? '迅速な予約' : '빠른 예약'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '24시간 이내 예약 확정'
-                  : '24時間以内に予約確定'}
+                  : language === 'ja'
+                  ? '24時間以内に予約確定'
+                  : '24시간 이내 예약 확정'}
               </p>
             </div>
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
@@ -312,12 +324,14 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
                 <CreditCard className="w-8 h-8 text-[#FF8C00]" />
               </div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '합리적인 가격' : 'リーズナブルな価格'}
+                {language === 'ko' ? '합리적인 가격' : language === 'ja' ? 'リーズナブルな価格' : '합리적인 가격'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '예약 건당 1000엔'
-                  : '予約1件につき1000円'}
+                  : language === 'ja'
+                  ? '予約1件につき1000円'
+                  : '예약 건당 1000엔'}
               </p>
             </div>
           </div>
@@ -328,61 +342,69 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
       <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-12">
-            {language === 'ko' ? '이용 방법' : 'ご利用方法'}
+            {language === 'ko' ? '이용 방법' : language === 'ja' ? 'ご利用方法' : '이용 방법'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
               <div className="text-[#FF8C00] text-4xl font-bold mb-4">01</div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '맛집 선택' : 'お店を選択'}
+                {language === 'ko' ? '맛집 선택' : language === 'ja' ? 'お店を選択' : '맛집 선택'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '추천 맛집 중에서 선택하거나 원하는 맛집을 요청하세요'
-                  : 'おすすめ店から選ぶか、希望のお店をリクエスト'}
+                  : language === 'ja'
+                  ? 'おすすめ店から選ぶか、希望のお店をリクエスト'
+                  : '추천 맛집 중에서 선택하거나 원하는 맛집을 요청하세요'}
               </p>
             </div>
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
               <div className="text-[#FF8C00] text-4xl font-bold mb-4">02</div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '예약 정보 입력' : '予約情報入力'}
+                {language === 'ko' ? '예약 정보 입력' : language === 'ja' ? '予約情報入力' : '예약 정보 입력'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '날짜, 시간, 인원수를 입력하고 예약을 요청하세요'
-                  : '日付、時間、人数を入力して予約をリクエスト'}
+                  : language === 'ja'
+                  ? '日付、時間、人数を入力して予約をリクエスト'
+                  : '날짜, 시간, 인원수를 입력하고 예약을 요청하세요'}
               </p>
             </div>
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
               <div className="text-[#FF8C00] text-4xl font-bold mb-4">03</div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '수수료 결제' : '手数料のお支払い'}
+                {language === 'ko' ? '수수료 결제' : language === 'ja' ? '手数料のお支払い' : '수수료 결제'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '1000엔의 예약 수수료를 결제해주세요'
-                  : '1000円の予約手数料をお支払い'}
+                  : language === 'ja'
+                  ? '1000円の予約手数料をお支払い'
+                  : '1000엔의 예약 수수료를 결제해주세요'}
               </p>
             </div>
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
               <div className="text-[#FF8C00] text-4xl font-bold mb-4">04</div>
               <h3 className="font-semibold mb-2">
-                {language === 'ko' ? '예약 확정' : '予約確定'}
+                {language === 'ko' ? '예약 확정' : language === 'ja' ? '予約確定' : '예약 확정'}
               </h3>
               <p className="text-gray-600 text-sm">
                 {language === 'ko'
                   ? '24시간 이내에 이메일로 예약 확정을 알려드립니다'
-                  : '24時間以内にメールで予約確定をお知らせ'}
+                  : language === 'ja'
+                  ? '24時間以内にメールで予約確定をお知らせ'
+                  : '24시간 이내에 이메일로 예약 확정을 알려드립니다'}
               </p>
             </div>
           </div>
           <div className="text-center mt-12">
             <ParticleButton
-              onClick={onReserveClick}
+              onClick={goToSearch}
               size="lg"
               className="font-bold text-lg"
             >
-              {language === 'ko' ? '지금 예약하기' : '今すぐ予約'}
+              {language === 'ko' ? '지금 예약하기' : language === 'ja' ? '今すぐ予約' : '지금 예약하기'}
             </ParticleButton>
           </div>
         </div>
@@ -392,7 +414,7 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
       <section id="options" className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-12">
-            {language === 'ko' ? '추가 옵션' : '追加オプション'}
+            {language === 'ko' ? '추가 옵션' : language === 'ja' ? '追加オプション' : '추가 옵션'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {OPTIONS[language].map((option, index) => (
@@ -414,7 +436,9 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
           <div className="text-center mt-8 text-gray-600">
             {language === 'ko'
               ? '* 옵션은 예약 시 추가할 수 있습니다'
-              : '* オプションは予約時に追加できます'}
+              : language === 'ja'
+              ? '* オプションは予約時に追加できます'
+              : '* 옵션은 예약 시 추가할 수 있습니다'}
           </div>
         </div>
       </section>
@@ -423,7 +447,7 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
       <section id="caution" className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-12">
-            {language === 'ko' ? '주의사항' : '注意事項'}
+            {language === 'ko' ? '주의사항' : language === 'ja' ? '注意事項' : '주의사항'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {CAUTION_ITEMS[language].map((item, index) => (
@@ -450,7 +474,7 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
       <section id="reviews" className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-12">
-            {language === 'ko' ? '이용후기' : 'レビュー'}
+            {language === 'ko' ? '이용후기' : language === 'ja' ? 'レビュー' : '이용후기'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {REVIEWS[language].map((review, index) => (
@@ -482,11 +506,11 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
           </div>
           <div className="text-center mt-12">
             <ParticleButton
-              onClick={onReserveClick}
+              onClick={goToSearch}
               size="lg"
               className="font-bold text-lg"
             >
-              {language === 'ko' ? '지금 예약하기' : '今すぐ予約'}
+              {language === 'ko' ? '지금 예약하기' : language === 'ja' ? '今すぐ予約' : '지금 예약하기'}
             </ParticleButton>
           </div>
         </div>
@@ -497,7 +521,7 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
         <div className="container mx-auto px-4">
           <div className="max-w-lg mx-auto text-center">
             <h2 className="text-2xl font-bold mb-8">
-              {language === 'ko' ? '가격 안내' : '料金案内'}
+              {language === 'ko' ? '가격 안내' : language === 'ja' ? '料金案内' : '가격 안내'}
             </h2>
             <div className="bg-white rounded-lg shadow-lg p-8 transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-center gap-4 mb-4">
@@ -505,14 +529,14 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
                 <span className="text-[#FF8C00] font-bold text-4xl">¥1,000</span>
               </div>
               <p className="text-gray-600 mb-8">
-                {language === 'ko' ? '예약 1건당 수수료' : '予約1件につき手数料'}
+                {language === 'ko' ? '예약 1건당 수수료' : language === 'ja' ? '予約1件につき手数料' : '예약 1건당 수수료'}
               </p>
               <ParticleButton
-                onClick={onReserveClick}
+                onClick={goToSearch}
                 size="lg"
                 className="w-full font-bold text-lg py-6"
               >
-                {language === 'ko' ? '예약하기' : '予約する'}
+                {language === 'ko' ? '예약하기' : language === 'ja' ? '予約する' : '예약하기'}
               </ParticleButton>
             </div>
           </div>
@@ -523,10 +547,38 @@ export default function LandingPage({ language, onLanguageToggle, onReserveClick
       <footer className="bg-gray-50 py-8">
         <div className="container mx-auto px-4">
           <p className="text-center text-gray-600 text-sm">
-            © 2025 IRUTOMO. {language === 'ko' ? '모든 권리 보유.' : '全ての権利を保有。'}
+            © 2025 IRUTOMO. {language === 'ko' ? '모든 권리 보유.' : language === 'ja' ? '全ての権利を保有。' : '모든 권리 보유.'}
           </p>
         </div>
       </footer>
+
+      {/* New section after reviews */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white py-20"
+      >
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-8">
+            {language === 'ko' ? '지금 바로 예약하세요' : language === 'ja' ? '今すぐ予約しよう' : 'Book Now'}
+          </h2>
+          <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
+            <button
+              onClick={goToSearch}
+              className="px-8 py-3 bg-[#ff8b00] text-white font-medium rounded-lg hover:bg-[#e67e00] transition-colors"
+            >
+              {language === 'ko' ? '레스토랑 예약하기' : language === 'ja' ? 'レストラン予約する' : 'Reserve a Restaurant'}
+            </button>
+            <button
+              onClick={goToStores}
+              className="px-8 py-3 bg-white text-[#ff8b00] font-medium rounded-lg border border-[#ff8b00] hover:bg-[#fff8f0] transition-colors"
+            >
+              {language === 'ko' ? '제휴 점포 목록 보기' : language === 'ja' ? '提携店舗リストを見る' : 'View Partner Stores'}
+            </button>
+          </div>
+        </div>
+      </motion.section>
     </div>
   );
 }
