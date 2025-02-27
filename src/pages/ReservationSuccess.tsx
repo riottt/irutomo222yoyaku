@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
-import { Calendar, Clock, Users, MapPin, Phone, Mail, Download } from 'lucide-react';
+import { Calendar, Clock, Users, MapPin, Phone, Mail, Download, Check, X, RefreshCw } from 'lucide-react';
+import { sendReservationConfirmationEmail, sendAdminNotificationEmail } from '../lib/emailService';
 
 interface ReservationSuccessProps {
   language: 'ko' | 'ja' | 'en';
@@ -16,6 +17,8 @@ export default function ReservationSuccess({ language }: ReservationSuccessProps
   const [restaurant, setRestaurant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const translations = {
     ko: {
@@ -44,7 +47,11 @@ export default function ReservationSuccess({ language }: ReservationSuccessProps
       status: '상태',
       pending: '대기 중',
       confirmed: '확인됨',
-      cancelled: '취소됨'
+      cancelled: '취소됨',
+      emailSent: '예약 확인 이메일이 전송되었습니다',
+      emailFailed: '이메일 전송에 실패했습니다',
+      resendEmail: '이메일 재전송',
+      sendingEmail: '이메일 전송 중...'
     },
     ja: {
       title: '予約確認',
@@ -72,7 +79,11 @@ export default function ReservationSuccess({ language }: ReservationSuccessProps
       status: 'ステータス',
       pending: '保留中',
       confirmed: '確認済み',
-      cancelled: 'キャンセル済み'
+      cancelled: 'キャンセル済み',
+      emailSent: '予約確認メールが送信されました',
+      emailFailed: 'メール送信に失敗しました',
+      resendEmail: 'メールを再送信',
+      sendingEmail: 'メール送信中...'
     },
     en: {
       title: 'Reservation Confirmation',
@@ -100,11 +111,59 @@ export default function ReservationSuccess({ language }: ReservationSuccessProps
       status: 'Status',
       pending: 'Pending',
       confirmed: 'Confirmed',
-      cancelled: 'Cancelled'
+      cancelled: 'Cancelled',
+      emailSent: 'Confirmation email has been sent',
+      emailFailed: 'Failed to send email',
+      resendEmail: 'Resend Email',
+      sendingEmail: 'Sending email...'
     }
   };
 
   const t = translations[language] || translations.ja;
+
+  // メール送信処理
+  const sendConfirmationEmail = async () => {
+    if (!reservation || !restaurant || !reservation.email) return;
+    
+    setSendingEmail(true);
+    setEmailSent(null);
+    
+    try {
+      console.log('Sending confirmation email for reservation:', reservationId);
+      
+      // 予約確認メールの送信
+      const result = await sendReservationConfirmationEmail(
+        reservation.email,
+        reservation.name,
+        reservationId || '',
+        getRestaurantName(),
+        formatDate(reservation.reservation_date),
+        reservation.reservation_time,
+        reservation.party_size,
+        language
+      );
+      
+      // 管理者通知メールの送信
+      await sendAdminNotificationEmail(
+        reservationId || '',
+        reservation.name,
+        reservation.email,
+        getRestaurantName(),
+        formatDate(reservation.reservation_date),
+        reservation.reservation_time,
+        reservation.party_size,
+        language
+      );
+      
+      console.log('Email sending result:', result);
+      setEmailSent(result.success);
+    } catch (err) {
+      console.error('Error sending email:', err);
+      setEmailSent(false);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   useEffect(() => {
     const fetchReservationData = async () => {
@@ -134,6 +193,12 @@ export default function ReservationSuccess({ language }: ReservationSuccessProps
 
         if (restaurantError) throw restaurantError;
         setRestaurant(restaurantData);
+        
+        // 自動的にメール送信を試行
+        // データ取得後に自動送信を行うため、直接呼び出さず、次のレンダリングサイクルで実行
+        setTimeout(() => {
+          sendConfirmationEmail();
+        }, 1000);
 
       } catch (err) {
         console.error('Error fetching reservation data:', err);
@@ -227,207 +292,246 @@ export default function ReservationSuccess({ language }: ReservationSuccessProps
     }
   };
 
+  // メール送信状態表示コンポーネント
+  const EmailStatusDisplay = () => {
+    if (sendingEmail) {
+      return (
+        <div className="flex items-center bg-blue-50 p-3 rounded-md mb-4">
+          <RefreshCw className="w-5 h-5 text-blue-500 animate-spin mr-2" />
+          <span className="text-blue-700">{t.sendingEmail}</span>
+        </div>
+      );
+    }
+    
+    if (emailSent === true) {
+      return (
+        <div className="flex items-center bg-green-50 p-3 rounded-md mb-4">
+          <Check className="w-5 h-5 text-green-500 mr-2" />
+          <span className="text-green-700">{t.emailSent}</span>
+        </div>
+      );
+    }
+    
+    if (emailSent === false) {
+      return (
+        <div className="flex items-center justify-between bg-red-50 p-3 rounded-md mb-4">
+          <div className="flex items-center">
+            <X className="w-5 h-5 text-red-500 mr-2" />
+            <span className="text-red-700">{t.emailFailed}</span>
+          </div>
+          <button
+            onClick={sendConfirmationEmail}
+            disabled={sendingEmail}
+            className="text-xs bg-red-100 hover:bg-red-200 text-red-800 font-medium py-1 px-2 rounded"
+          >
+            {t.resendEmail}
+          </button>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF8C00] border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF8C00] border-t-transparent"></div>
       </div>
     );
   }
 
   if (error || !reservation || !restaurant) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="text-red-600 text-2xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold mb-2">{t.error}</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button 
-            onClick={() => navigate('/')}
-            className="px-6 py-2 bg-[#FF8C00] text-white rounded-md shadow-md hover:bg-[#E67E00] transition-colors"
-          >
-            {t.back}
-          </button>
-        </div>
+      <div className="text-center py-12">
+        <div className="text-red-500 text-xl mb-4">{error}</div>
+        <button
+          onClick={() => navigate('/')}
+          className="px-6 py-2 bg-[#FF8C00] text-white rounded-lg hover:brightness-110 transition-all"
+        >
+          {t.back}
+        </button>
       </div>
     );
   }
 
-  const qrValue = JSON.stringify({
-    id: reservation.id,
+  const qrData = JSON.stringify({
+    id: reservationId,
     name: reservation.name,
-    restaurantId: reservation.restaurant_id,
+    restaurant: restaurant.name,
     date: reservation.reservation_date,
     time: reservation.reservation_time,
-    party_size: reservation.party_size
+    partySize: reservation.party_size,
+    status: reservation.status
   });
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          {/* 成功メッセージ */}
-          <div className="text-center mb-10">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{t.title}</h1>
-            <p className="text-lg text-gray-600">{t.success}</p>
-          </div>
-
-          {/* 予約詳細カード */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800">{t.reservationDetails}</h2>
-                <span className={`${getStatusColor(reservation.status)} font-medium`}>
-                  {getStatusText(reservation.status)}
-                </span>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      {/* 予約確認ヘッダー */}
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+          <Check className="w-8 h-8 text-green-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.title}</h1>
+        <p className="text-lg text-gray-600">{t.success}</p>
+      </div>
+      
+      {/* メール送信状態 */}
+      <EmailStatusDisplay />
+      
+      {/* 予約詳細 */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
+        <div className="px-6 py-4 bg-[#FF8C00] text-white">
+          <h2 className="text-xl font-semibold">{t.reservationDetails}</h2>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 左側のカラム - 予約情報 */}
+            <div className="space-y-4">
+              {/* レストラン名 */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t.restaurant}</h3>
+                <p className="text-lg font-medium text-gray-900">{getRestaurantName()}</p>
+              </div>
+              
+              {/* 予約ID */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t.reservationId}</h3>
+                <p className="text-lg font-medium text-gray-900">{reservationId}</p>
+              </div>
+              
+              {/* 日付 */}
+              <div className="flex items-start">
+                <Calendar className="w-5 h-5 text-[#FF8C00] mt-0.5 mr-2" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">{t.date}</h3>
+                  <p className="text-lg font-medium text-gray-900">
+                    {formatDate(reservation.reservation_date)}
+                  </p>
+                </div>
+              </div>
+              
+              {/* 時間 */}
+              <div className="flex items-start">
+                <Clock className="w-5 h-5 text-[#FF8C00] mt-0.5 mr-2" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">{t.time}</h3>
+                  <p className="text-lg font-medium text-gray-900">{reservation.reservation_time}</p>
+                </div>
+              </div>
+              
+              {/* 人数 */}
+              <div className="flex items-start">
+                <Users className="w-5 h-5 text-[#FF8C00] mt-0.5 mr-2" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">{t.partySize}</h3>
+                  <p className="text-lg font-medium text-gray-900">{reservation.party_size}</p>
+                </div>
+              </div>
+              
+              {/* 予約ステータス */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t.status}</h3>
+                <div className="mt-1">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                      ${
+                        reservation.status === 'confirmed'
+                          ? 'bg-green-100 text-green-800'
+                          : reservation.status === 'cancelled'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                  >
+                    {reservation.status === 'confirmed'
+                      ? t.confirmed
+                      : reservation.status === 'cancelled'
+                      ? t.cancelled
+                      : t.pending}
+                  </span>
+                </div>
+              </div>
+              
+              {/* 支払い状況 */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t.paymentCompleted}</h3>
+                <div className="mt-1">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <Check className="w-3 h-3 mr-1" /> {t.paymentCompleted}
+                  </span>
+                </div>
               </div>
             </div>
             
-            <div className="p-6">
-              {/* 予約ID */}
-              <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-1">{t.reservationId}</p>
-                <p className="text-base font-medium">{reservation.id}</p>
-              </div>
-              
-              {/* レストラン情報 */}
-              <div className="mb-6">
-                <div className="flex items-start">
-                  <MapPin className="w-5 h-5 text-[#FF8C00] mt-0.5 mr-2" />
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-800">{getRestaurantName()}</h3>
-                    <p className="text-gray-600 mt-1">{restaurant.address}</p>
-                    {restaurant.phone && (
-                      <p className="flex items-center text-gray-600 mt-2">
-                        <Phone className="w-4 h-4 mr-1" />
-                        {restaurant.phone}
-                      </p>
-                    )}
-                  </div>
+            {/* 右側のカラム - QRコードと連絡先 */}
+            <div className="space-y-6">
+              {/* QRコード */}
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-800 mb-4">{t.qrCode}</h3>
+                <div className="inline-block bg-white p-3 border rounded-lg shadow-sm">
+                  <QRCodeSVG
+                    id="reservation-qr-code"
+                    value={qrData}
+                    size={150}
+                    level="H"
+                    includeMargin
+                    bgColor="#FFFFFF"
+                    fgColor="#000000"
+                  />
                 </div>
-              </div>
-              
-              {/* 予約情報 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="flex items-center">
-                  <Calendar className="w-5 h-5 text-[#FF8C00] mr-2" />
-                  <div>
-                    <p className="text-sm text-gray-500">{t.date}</p>
-                    <p className="text-base font-medium">
-                      {formatDate(reservation.reservation_date)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <Clock className="w-5 h-5 text-[#FF8C00] mr-2" />
-                  <div>
-                    <p className="text-sm text-gray-500">{t.time}</p>
-                    <p className="text-base font-medium">{reservation.reservation_time}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <Users className="w-5 h-5 text-[#FF8C00] mr-2" />
-                  <div>
-                    <p className="text-sm text-gray-500">{t.partySize}</p>
-                    <p className="text-base font-medium">{reservation.party_size}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <div className="w-5 h-5 flex items-center justify-center text-[#FF8C00] mr-2">
-                    <span className="text-lg font-bold">₩</span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">{t.paymentCompleted}</p>
-                    <p className="text-base font-medium">
-                      {reservation.payment_status === 'completed' ? (
-                        <span className="text-green-600">✓</span>
-                      ) : (
-                        <span className="text-yellow-600">⚠</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
+                <p className="text-sm text-gray-500 mt-2 mb-4">
+                  {t.qrExplanation}
+                </p>
+                <button 
+                  onClick={handleDownloadQR}
+                  className="inline-flex items-center text-[#FF8C00] hover:text-orange-600"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  {t.download}
+                </button>
               </div>
               
               {/* 連絡先情報 */}
-              <div className="border-t border-gray-200 pt-6 mb-6">
+              <div>
                 <h3 className="text-lg font-medium text-gray-800 mb-4">{t.contactInfo}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">{t.name}</p>
-                    <p className="text-base font-medium">{reservation.name}</p>
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <MapPin className="w-5 h-5 text-gray-400 mr-2" />
+                    <span className="text-gray-600">{restaurant.address}</span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">{t.email}</p>
-                    <p className="text-base font-medium">{reservation.email}</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* 特別リクエスト */}
-              {reservation.special_requests && (
-                <div className="border-t border-gray-200 pt-6 mb-6">
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">{t.specialRequests}</h3>
-                  <p className="text-gray-600">
-                    {reservation.special_requests || t.none}
-                  </p>
-                </div>
-              )}
-              
-              {/* QRコード */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-800 mb-4">{t.qrCode}</h3>
-                <div className="flex flex-col items-center">
-                  <div className="bg-white p-3 border border-gray-300 rounded-lg mb-3">
-                    <QRCodeSVG 
-                      id="reservation-qr-code"
-                      value={qrValue}
-                      size={180}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 text-center mb-4">
-                    {t.qrExplanation}
-                  </p>
-                  <button
-                    onClick={handleDownloadQR}
-                    className="flex items-center text-[#FF8C00] hover:text-[#E67E00] transition-colors"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    {t.download}
-                  </button>
+                  {restaurant.phone && (
+                    <div className="flex items-center">
+                      <Phone className="w-5 h-5 text-gray-400 mr-2" />
+                      <span className="text-gray-600">{restaurant.phone}</span>
+                    </div>
+                  )}
+                  {restaurant.email && (
+                    <div className="flex items-center">
+                      <Mail className="w-5 h-5 text-gray-400 mr-2" />
+                      <span className="text-gray-600">{restaurant.email}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-          
-          {/* 地図ボタン */}
-          {restaurant.google_maps_url && (
-            <div className="flex justify-center">
-              <a
-                href={restaurant.google_maps_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 bg-[#FF8C00] text-white rounded-md shadow-md hover:bg-[#E67E00] transition-colors flex items-center"
-              >
-                <MapPin className="w-5 h-5 mr-2" />
-                {t.directions}
-              </a>
-            </div>
-          )}
         </div>
+      </div>
+      
+      {/* アクションボタン */}
+      <div className="flex justify-between mt-8">
+        <button
+          onClick={() => navigate('/')}
+          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+        >
+          {t.back}
+        </button>
+        <button
+          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`, '_blank')}
+          className="px-6 py-2 bg-[#FF8C00] text-white rounded-lg hover:brightness-110 transition-all"
+        >
+          {t.directions}
+        </button>
       </div>
     </div>
   );

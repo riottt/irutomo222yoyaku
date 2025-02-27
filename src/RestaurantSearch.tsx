@@ -60,16 +60,43 @@ export default function RestaurantSearch({ language, onSelectRestaurant }: Resta
 
   const fetchRestaurants = async () => {
     try {
+      setIsLoading(true);
+      console.log('レストラン情報取得開始...');
+      
+      // まず接続テストを実行
+      const testResult = await supabase.from('restaurants').select('id').limit(1);
+      if (testResult.error) {
+        console.error('接続テストエラー:', testResult.error);
+        throw new Error(`接続テストエラー: ${testResult.error.message}`);
+      }
+      
+      console.log('接続テスト成功。全レストラン情報を取得します...');
+      
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
         .order('rating', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('レストラン情報取得エラー:', error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.warn('レストランデータが取得できませんでした（空のデータセット）');
+      } else {
+        console.log(`${data.length}件のレストラン情報を取得しました`);
+      }
+      
       setRestaurants(data || []);
     } catch (error) {
       console.error('Error fetching restaurants:', error);
-      alert(language === 'ko' ? '데이터 로딩 중 오류가 발생했습니다' : language === 'ja' ? 'データの読み込み中にエラーが発生しました' : 'Error loading data');
+      // ユーザーフレンドリーなエラーメッセージ
+      alert(language === 'ko' 
+        ? '데이터 로딩 중 오류가 발생했습니다. 다시 시도해 주세요.' 
+        : language === 'ja' 
+        ? 'データの読み込み中にエラーが発生しました。再度お試しください。' 
+        : 'Error loading data. Please try again.');
     } finally {
       setIsLoading(false);
     }

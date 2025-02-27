@@ -9,9 +9,10 @@ interface ReservationInputProps {
   restaurantId: string;
   language: 'ko' | 'ja';
   onBack: () => void;
+  onComplete?: (reservationId: string) => void;
 }
 
-export default function ReservationInput({ restaurantId, language, onBack }: ReservationInputProps) {
+export default function ReservationInput({ restaurantId, language, onBack, onComplete }: ReservationInputProps) {
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,8 +101,10 @@ export default function ReservationInput({ restaurantId, language, onBack }: Res
           reservation_date: date,
           reservation_time: time,
           party_size: parseInt(partySize),
-          name: email.split('@')[0], // Use part of email as name for simplicity
+          name: email.split('@')[0],
           email: email,
+          phone: '',
+          special_requests: '',
           status: 'pending',
           payment_status: 'completed',
           payment_amount: 1000
@@ -113,14 +116,19 @@ export default function ReservationInput({ restaurantId, language, onBack }: Res
       // Send to confirmation page with reservation ID
       if (data && data.length > 0) {
         const reservationId = data[0].id;
-        // Navigate to success page with reservation ID
-        navigate(`/reservation-success/${reservationId}`);
+        // onCompleteが提供されている場合はそれを使用し、そうでなければnavigate
+        if (onComplete) {
+          onComplete(reservationId);
+        } else {
+          // Navigate to success page with reservation ID
+          navigate(`/reservation-success/${reservationId}`);
+        }
       } else {
         throw new Error('No reservation data returned');
       }
     } catch (error) {
       console.error('Error creating reservation:', error);
-      alert(language === 'ko'
+      alert(language === 'ko' 
         ? '예약 중 오류가 발생했습니다. 다시 시도해주세요.'
         : '予約中にエラーが発生しました。もう一度お試しください。');
     } finally {

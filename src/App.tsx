@@ -5,7 +5,7 @@ import RestaurantDetails from './components/RestaurantDetails';
 import ReservationInput from './components/ReservationInput';
 import StoreList from './components/StoreList';
 import { supabase, testConnection } from './lib/supabase';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Outlet, Navigate, useParams } from 'react-router-dom';
 import ServiceIntroduction from './pages/ServiceIntroduction';
 import Options from './pages/Options';
 import Cautions from './pages/Cautions';
@@ -29,7 +29,7 @@ function PageWithNavigation({ language, onLanguageChange }) {
   const goToCautions = () => navigate('/cautions');
   const goToStoreInfo = () => navigate('/store-info');
   const goToReviews = () => navigate('/reviews');
-  const goToAdmin = () => navigate('/admin');
+  const goToAdmin = () => navigate('/admin');  // 必ず定義して渡す
   
   // 共通ナビゲーションアイテム
   const NAV_ITEMS = getCommonNavItems(language, {
@@ -38,7 +38,7 @@ function PageWithNavigation({ language, onLanguageChange }) {
     goToCautions,
     goToStoreInfo,
     goToReviews,
-    goToAdmin
+    goToAdmin  // 明示的に指定して管理者ダッシュボードへのリンクを常に表示
   });
   
   return (
@@ -77,32 +77,51 @@ function StandalonePageWrapper({ language, Component }) {
 function RestaurantSearchWrapper({ language, onSelectRestaurant }) {
   const navigate = useNavigate();
   
-  // レストラン選択時の処理をラップする
-  const handleRestaurantSelect = (id) => {
-    // 親コンポーネントの処理を呼び出す
+  const handleSelectRestaurant = (id) => {
+    console.log('レストラン選択 ID:', id);
     onSelectRestaurant(id);
-    
-    // 詳細ページへの遷移はRestaurantSearch内部で行われるため、ここでは何もしない
+    navigate(`/restaurant-details/${id}`);
   };
   
-  return <RestaurantSearch 
-    language={language} 
-    onSelectRestaurant={handleRestaurantSelect} 
-  />;
+  return <RestaurantSearch language={language} onSelectRestaurant={handleSelectRestaurant} />;
 }
 
-function ReservationInputWrapper({ language, restaurantId }) {
+function ReservationInputWrapper({ language }) {
   const navigate = useNavigate();
-  return <ReservationInput 
-    language={language} 
-    restaurantId={restaurantId} 
-    onBack={() => navigate(-1)} 
-  />;
+  const { id } = useParams();
+  
+  return (
+    <ReservationInput 
+      language={language} 
+      restaurantId={id || ''} 
+      onBack={() => navigate(-1)} 
+      onComplete={(reservationId) => navigate(`/reservation-success/${reservationId}`)} 
+    />
+  );
 }
 
 function AdminDashboardWrapper({ language }) {
   const navigate = useNavigate();
   return <AdminDashboard language={language} onBack={() => navigate('/')} />;
+}
+
+// RestaurantDetails用のラッパー
+function RestaurantDetailsWrapper({ language }) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  const handleReserve = (restaurantId) => {
+    navigate(`/reservation-input/${restaurantId}`);
+  };
+  
+  return (
+    <RestaurantDetails 
+      restaurantId={id}
+      language={language} 
+      onBack={() => navigate(-1)} 
+      onReserve={handleReserve}
+    />
+  );
 }
 
 function App() {
@@ -203,11 +222,12 @@ function App() {
               onSelectRestaurant={handleRestaurantSelect} 
             />
           } />
-          <Route path="/restaurant-details/:id" element={<RestaurantDetails language={currentLanguage} />} />
+          {/* /search へのリダイレクトを追加 */}
+          <Route path="/search" element={<Navigate to="/restaurant-search" replace />} />
+          <Route path="/restaurant-details/:id" element={<RestaurantDetailsWrapper language={currentLanguage} />} />
           <Route path="/reservation-input/:id" element={
             <ReservationInputWrapper 
               language={currentLanguage} 
-              restaurantId={restaurantId} 
             />
           } />
           <Route path="/reservation-success/:reservationId" element={<ReservationSuccess language={currentLanguage} />} />
