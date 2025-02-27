@@ -1,5 +1,5 @@
 import { cn } from "../../lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -8,7 +8,7 @@ interface Links {
   name: string;
   url: string;
   icon: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 interface SidebarContextProps {
@@ -80,6 +80,13 @@ export const MobileSidebar = ({
   ...props
 }: React.ComponentProps<"div">) => {
   const { open, setOpen } = useSidebar();
+  const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    navigate('/');
+    setOpen(false);
+  };
+
   return (
     <>
       <div
@@ -113,8 +120,8 @@ export const MobileSidebar = ({
                 className
               )}
             >
-              <div className="flex justify-between items-center p-4 border-b">
-                <div className="text-xl font-bold text-[#FF8C00]">
+              <div className="flex justify-between items-center p-4 border-b bg-white">
+                <div className="text-xl font-bold cursor-pointer" onClick={handleLogoClick}>
                   <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-6" />
                 </div>
                 <div
@@ -144,6 +151,17 @@ export const SidebarLink = ({
   className?: string;
   props?: any;
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (link.onClick) {
+      link.onClick(e);
+    } else if (link.url && link.url.startsWith('/')) {
+      navigate(link.url);
+    }
+  };
+
   return (
     <a
       href={link.url}
@@ -151,12 +169,7 @@ export const SidebarLink = ({
         "flex items-center px-6 py-3 hover:bg-[#FFC458]/10 text-gray-700 hover:text-[#FF8C00] transition-colors",
         className
       )}
-      onClick={(e) => {
-        if (link.onClick) {
-          e.preventDefault();
-          link.onClick();
-        }
-      }}
+      onClick={handleClick}
       {...props}
     >
       <span className="mr-3">{link.icon}</span>

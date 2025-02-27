@@ -12,6 +12,27 @@ import Cautions from './pages/Cautions';
 import StoreInfo from './pages/StoreInfo';
 import Reviews from './pages/Reviews';
 
+// Wrapper component to provide navigate function to pages
+function PageWithNavigation({ 
+  Component, 
+  language, 
+  onLanguageChange, 
+  restaurantId = null,
+  onSelect = null
+}) {
+  const navigate = useNavigate();
+  
+  return (
+    <Component 
+      language={language} 
+      onLanguageChange={onLanguageChange} 
+      onBack={() => navigate('/')}
+      restaurantId={restaurantId}
+      onSelect={onSelect}
+    />
+  );
+}
+
 function App() {
   const [language, setLanguage] = useState<'ko' | 'ja' | 'en'>('ko');
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
@@ -45,91 +66,90 @@ function App() {
           <Route 
             path="/service-introduction" 
             element={
-              <ServiceIntroduction 
+              <PageWithNavigation 
+                Component={ServiceIntroduction} 
                 language={language} 
-                onLanguageChange={handleLanguageChange} 
-                onBack={() => window.history.back()}
+                onLanguageChange={handleLanguageChange}
               />
             } 
           />
           <Route 
             path="/options" 
             element={
-              <Options 
+              <PageWithNavigation 
+                Component={Options} 
                 language={language} 
                 onLanguageChange={handleLanguageChange} 
-                onBack={() => window.history.back()}
               />
             } 
           />
           <Route 
             path="/cautions" 
             element={
-              <Cautions 
+              <PageWithNavigation 
+                Component={Cautions} 
                 language={language} 
                 onLanguageChange={handleLanguageChange} 
-                onBack={() => window.history.back()}
               />
             } 
           />
           <Route 
             path="/store-info" 
             element={
-              <StoreInfo 
+              <PageWithNavigation 
+                Component={StoreInfo} 
                 language={language} 
                 onLanguageChange={handleLanguageChange} 
-                onBack={() => window.history.back()}
               />
             } 
           />
           <Route 
             path="/reviews" 
             element={
-              <Reviews 
+              <PageWithNavigation 
+                Component={Reviews} 
                 language={language} 
                 onLanguageChange={handleLanguageChange} 
-                onBack={() => window.history.back()}
               />
             } 
           />
           <Route 
             path="/search" 
             element={
-              <RestaurantSearch 
+              <PageWithNavigation
+                Component={RestaurantSearch}
                 language={language} 
-                onBack={() => {}}
-                onSelect={handleRestaurantSelect}
                 onLanguageChange={handleLanguageChange}
+                onSelect={handleRestaurantSelect}
               />
             } 
           />
           <Route 
             path="/details/:restaurantId" 
             element={
-              <RestaurantDetails 
+              <PageWithNavigation
+                Component={RestaurantDetails}
                 restaurantId={selectedRestaurantId || ''}
                 language={language}
-                onBack={() => {}}
-                onReserve={() => {}}
               />
             } 
           />
           <Route 
             path="/reservation/:restaurantId" 
             element={
-              <ReservationInput 
+              <PageWithNavigation
+                Component={ReservationInput}
                 restaurantId={selectedRestaurantId || ''}
                 language={language}
-                onBack={() => {}}
               />
             } 
           />
           <Route 
             path="/stores" 
             element={
-              <StoreList 
+              <PageWithNavigation
+                Component={StoreList}
                 language={language}
-                onBack={() => {}}
                 onLanguageChange={handleLanguageChange}
               />
             } 

@@ -4,6 +4,7 @@ import { DivideIcon as LucideIcon, Globe, Home, Info, AlertCircle, Store, Star }
 import { cn } from "../../lib/utils";
 import { useScreenSize } from "../hooks/use-screen-size";
 import { Sidebar, SidebarBody, SidebarLink, LanguageButton } from "./Sidebar";
+import { useNavigate } from "react-router-dom";
 
 interface NavItem {
   name: string;
@@ -24,6 +25,7 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
   const [isMobile, setIsMobile] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const screenSize = useScreenSize();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -45,6 +47,8 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
+    } else if (item.url.startsWith('/')) {
+      navigate(item.url);
     }
     if (isMobile) {
       setIsMenuOpen(false);
@@ -58,32 +62,56 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
     }
   };
 
+  // ホームに戻る関数
+  const goToHome = () => {
+    navigate('/');
+    setIsMenuOpen(false);
+  };
+
   // サイドバー用のナビゲーションアイテム
-  const sidebarItems = items.map(item => ({
-    name: item.name,
-    url: item.url,
-    icon: <item.icon size={20} />,
-    onClick: (e: any) => {
-      e.preventDefault();
-      setActiveTab(item.name);
-      if (item.onClick) {
-        item.onClick();
-      } else if (item.url.startsWith('#')) {
-        const element = document.querySelector(item.url);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
+  const sidebarItems = [
+    {
+      name: "ホーム",
+      url: "/",
+      icon: <Home size={20} />,
+      onClick: (e: any) => {
+        e.preventDefault();
+        navigate('/');
+        setIsMenuOpen(false);
       }
-      setIsMenuOpen(false);
-    }
-  }));
+    },
+    ...items.map(item => ({
+      name: item.name,
+      url: item.url,
+      icon: <item.icon size={20} />,
+      onClick: (e: any) => {
+        e.preventDefault();
+        if (item.onClick) {
+          item.onClick();
+        } else if (item.url.startsWith('#')) {
+          const element = document.querySelector(item.url);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        } else if (item.url.startsWith('/')) {
+          navigate(item.url);
+        }
+        setIsMenuOpen(false);
+      }
+    }))
+  ];
 
   return (
     <nav className="relative bg-white border-b overflow-hidden">
       <div className="container mx-auto px-4 relative">
         <div className="flex items-center justify-between py-3">
+          {/* Logo - クリックでホームに戻る */}
+          <div className="cursor-pointer" onClick={goToHome}>
+            <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-8" />
+          </div>
+
           {/* デスクトップメニュー - 常に表示 */}
-          <div className="flex-1 items-center justify-center gap-3 flex">
+          <div className="flex-1 items-center justify-center gap-3 flex ml-4">
             {items.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.name;
