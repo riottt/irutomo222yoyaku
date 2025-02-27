@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TubelightNavbar } from '../components/ui/TubelightNavbar';
 import { Settings, Check, AlertCircle, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface OptionsProps {
   language: 'ko' | 'ja' | 'en';
@@ -14,20 +14,7 @@ export default function Options({
   onLanguageChange,
   onBack
 }: OptionsProps) {
-  
-  const NAV_ITEMS = [
-    {
-      name: language === 'ko' ? '옵션' : language === 'ja' ? 'オプション' : 'Options',
-      url: '#',
-      icon: Settings,
-    },
-    {
-      name: language === 'ko' ? '홈으로 돌아가기' : language === 'ja' ? 'ホームに戻る' : 'Back to Home',
-      url: '#',
-      icon: Info,
-      onClick: onBack,
-    },
-  ];
+  const navigate = useNavigate();
 
   const basicOptions = [
     {
@@ -189,7 +176,6 @@ export default function Options({
             </div>
           </div>
         </div>
-        <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
       </header>
 
       <main className="container mx-auto px-4 py-12">

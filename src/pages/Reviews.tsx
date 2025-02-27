@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TubelightNavbar } from '../components/ui/TubelightNavbar';
-import { MessageSquare, Star, ThumbsUp, User, Calendar, Bookmark, Search, Info } from 'lucide-react';
+import { MessageSquare, Star, ThumbsUp, User, Calendar, Bookmark, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ReviewsProps {
   language: 'ko' | 'ja' | 'en';
@@ -10,19 +10,12 @@ interface ReviewsProps {
 }
 
 export default function Reviews({ language, onLanguageChange, onBack }: ReviewsProps) {
-  const NAV_ITEMS = [
-    {
-      name: language === 'ko' ? '리뷰' : language === 'ja' ? 'レビュー' : 'Reviews',
-      url: '#',
-      icon: MessageSquare,
-    },
-    {
-      name: language === 'ko' ? '홈으로 돌아가기' : language === 'ja' ? 'ホームに戻る' : 'Back to Home',
-      url: '#',
-      icon: Info,
-      onClick: onBack,
-    },
-  ];
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [sortOption, setSortOption] = useState('recent');
+  const [helpfulReviews, setHelpfulReviews] = useState<number[]>([]);
+  const [expandedReviews, setExpandedReviews] = useState<number[]>([]);
 
   const reviewTitles = {
     ko: {
@@ -204,229 +197,281 @@ export default function Reviews({ language, onLanguageChange, onBack }: ReviewsP
     );
   };
 
+  // フィルター処理関数
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter);
+  };
+
+  // ソート処理関数
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortOption(e.target.value);
+  };
+
+  // 「役に立った」ボタン処理
+  const handleHelpfulClick = (reviewId: number) => {
+    if (helpfulReviews.includes(reviewId)) {
+      setHelpfulReviews(helpfulReviews.filter(id => id !== reviewId));
+    } else {
+      setHelpfulReviews([...helpfulReviews, reviewId]);
+    }
+  };
+
+  // 「もっと見る」ボタン処理
+  const handleExpandReview = (reviewId: number) => {
+    if (expandedReviews.includes(reviewId)) {
+      setExpandedReviews(expandedReviews.filter(id => id !== reviewId));
+    } else {
+      setExpandedReviews([...expandedReviews, reviewId]);
+    }
+  };
+
+  // レビュー作成ボタン処理
+  const handleWriteReview = () => {
+    // レビュー作成ページへ遷移するか、モーダルを表示
+    alert(language === 'ko' ? '리뷰 작성 기능은 준비 중입니다.' : language === 'ja' ? 'レビュー作成機能は準備中です。' : 'Review writing feature is coming soon.');
+  };
+
+  // 検索処理
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // 検索処理を実装
+    alert(language === 'ko' ? `"${searchTerm}" 검색 결과` : language === 'ja' ? `"${searchTerm}" の検索結果` : `Search results for "${searchTerm}"`);
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+    <div className="max-w-5xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">
+          {reviewTitles[language].title}
+        </h1>
+        <p className="text-gray-600 text-center mb-12 max-w-3xl mx-auto">
+          {reviewTitles[language].subtitle}
+        </p>
+
+        {/* Search and filters */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-10">
+          <form onSubmit={handleSearch} className="flex items-center border rounded-lg overflow-hidden mb-6 focus-within:ring-2 focus-within:ring-[#FF8C00]/50">
+            <Search className="ml-3 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder={reviewTitles[language].searchPlaceholder}
+              className="flex-1 px-4 py-3 focus:outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </form>
+
+          <div className="flex flex-wrap justify-between items-center gap-4">
+            <div className="flex flex-wrap gap-2">
+              <button 
+                className={`px-4 py-2 ${activeFilter === 'all' ? 'bg-[#FF8C00] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded-full text-sm font-medium transition-colors`}
+                onClick={() => handleFilterChange('all')}
+              >
+                {reviewTitles[language].filterAll}
+              </button>
+              <button 
+                className={`px-4 py-2 ${activeFilter === 'positive' ? 'bg-[#FF8C00] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded-full text-sm font-medium transition-colors`}
+                onClick={() => handleFilterChange('positive')}
+              >
+                {reviewTitles[language].filterPositive}
+              </button>
+              <button 
+                className={`px-4 py-2 ${activeFilter === 'neutral' ? 'bg-[#FF8C00] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded-full text-sm font-medium transition-colors`}
+                onClick={() => handleFilterChange('neutral')}
+              >
+                {reviewTitles[language].filterNeutral}
+              </button>
+              <button 
+                className={`px-4 py-2 ${activeFilter === 'negative' ? 'bg-[#FF8C00] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded-full text-sm font-medium transition-colors`}
+                onClick={() => handleFilterChange('negative')}
+              >
+                {reviewTitles[language].filterNegative}
+              </button>
+            </div>
+
             <div className="flex items-center">
-              <span className="text-xl font-bold text-[#FF8C00]">IRUTOMO</span>
+              <select 
+                className="bg-white border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF8C00]/50"
+                value={sortOption}
+                onChange={handleSortChange}
+              >
+                <option value="recent">{reviewTitles[language].sortRecent}</option>
+                <option value="highest">{reviewTitles[language].sortHighest}</option>
+                <option value="lowest">{reviewTitles[language].sortLowest}</option>
+              </select>
             </div>
           </div>
         </div>
-        <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
-      </header>
 
-      <main className="container mx-auto px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-5xl mx-auto"
-        >
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">
-            {reviewTitles[language].title}
-          </h1>
-          <p className="text-gray-600 text-center mb-12 max-w-3xl mx-auto">
-            {reviewTitles[language].subtitle}
-          </p>
-
-          {/* Search and filters */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-10">
-            <div className="flex items-center border rounded-lg overflow-hidden mb-6 focus-within:ring-2 focus-within:ring-[#FF8C00]/50">
-              <Search className="ml-3 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder={reviewTitles[language].searchPlaceholder}
-                className="flex-1 px-4 py-3 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-wrap justify-between items-center gap-4">
-              <div className="flex flex-wrap gap-2">
-                <button className="px-4 py-2 bg-[#FF8C00] text-white rounded-full text-sm font-medium">
-                  {reviewTitles[language].filterAll}
-                </button>
-                <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors">
-                  {reviewTitles[language].filterPositive}
-                </button>
-                <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors">
-                  {reviewTitles[language].filterNeutral}
-                </button>
-                <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors">
-                  {reviewTitles[language].filterNegative}
-                </button>
-              </div>
-
-              <div className="flex items-center">
-                <select className="bg-white border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF8C00]/50">
-                  <option>{reviewTitles[language].sortRecent}</option>
-                  <option>{reviewTitles[language].sortHighest}</option>
-                  <option>{reviewTitles[language].sortLowest}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Featured Reviews */}
-          <div className="mb-16">
-            <h2 className="text-2xl font-semibold mb-6 text-[#FF8C00]">
-              {reviewTitles[language].featuredReviews}
-            </h2>
-            
-            <div className="space-y-8">
-              {reviews
-                .filter(review => review.featured)
-                .map((review, index) => (
-                <motion.div
-                  key={review.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100"
-                >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center">
-                        <img
-                          src={review.userAvatar}
-                          alt={review.userName}
-                          className="w-10 h-10 rounded-full mr-3 object-cover"
-                        />
-                        <div>
-                          <div className="font-medium">{review.userName}</div>
-                          <div className="text-sm text-gray-500 flex items-center">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {new Date(review.date).toLocaleDateString()}
-                            {review.isVerified && (
-                              <span className="ml-2 flex items-center text-green-600 text-xs">
-                                <Bookmark className="w-3 h-3 mr-1" />
-                                {reviewTitles[language].verified}
-                              </span>
-                            )}
-                          </div>
+        {/* Featured Reviews */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-semibold mb-6 text-[#FF8C00]">
+            {reviewTitles[language].featuredReviews}
+          </h2>
+          
+          <div className="space-y-8">
+            {reviews
+              .filter(review => review.featured)
+              .map((review, index) => (
+              <motion.div
+                key={review.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100"
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <img
+                        src={review.userAvatar}
+                        alt={review.userName}
+                        className="w-10 h-10 rounded-full mr-3 object-cover"
+                      />
+                      <div>
+                        <div className="font-medium">{review.userName}</div>
+                        <div className="text-sm text-gray-500 flex items-center">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {new Date(review.date).toLocaleDateString()}
+                          {review.isVerified && (
+                            <span className="ml-2 flex items-center text-green-600 text-xs">
+                              <Bookmark className="w-3 h-3 mr-1" />
+                              {reviewTitles[language].verified}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div>
-                        {renderStars(review.rating)}
-                      </div>
                     </div>
-                    
-                    <h3 className="font-semibold text-lg mb-2">
-                      {review.restaurantName[language]}
-                    </h3>
-                    
-                    <p className="text-gray-700 mb-4">
-                      {review.content[language]}
-                    </p>
-                    
-                    {review.images.length > 0 && (
-                      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                        {review.images.map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={img}
-                            alt={`Review image ${idx+1}`}
-                            className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
-                          />
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-1 text-gray-500">
-                        {review.tags.map((tag, idx) => (
-                          <span key={idx} className="bg-gray-100 rounded-full px-3 py-1">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center text-gray-500">
-                        <button className="flex items-center hover:text-[#FF8C00] transition-colors mr-2">
-                          <ThumbsUp className="w-4 h-4 mr-1" />
-                          {reviewTitles[language].helpful}
-                        </button>
-                        <span className="text-xs">
-                          {review.helpfulCount} {reviewTitles[language].helpfulCount}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* All Reviews (Sample) */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-[#FF8C00]">
-                {reviewTitles[language].allReviews}
-              </h2>
-              <p className="text-gray-500">
-                {reviews.length} {reviewTitles[language].reviewCount}
-              </p>
-            </div>
-            
-            <div className="space-y-6">
-              {reviews.map((review, index) => (
-                <motion.div
-                  key={review.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-white rounded-lg border border-gray-200 p-5"
-                >
-                  <div className="flex items-center mb-3">
-                    <img
-                      src={review.userAvatar}
-                      alt={review.userName}
-                      className="w-8 h-8 rounded-full mr-3 object-cover"
-                    />
                     <div>
-                      <div className="font-medium">{review.userName}</div>
-                      <div className="text-xs text-gray-500 flex items-center">
-                        {new Date(review.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="ml-auto">
                       {renderStars(review.rating)}
                     </div>
                   </div>
                   
-                  <h3 className="font-medium mb-2">
+                  <h3 className="font-semibold text-lg mb-2">
                     {review.restaurantName[language]}
                   </h3>
                   
-                  <p className="text-gray-700 text-sm mb-3">
-                    {review.content[language].length > 150 
-                      ? `${review.content[language].substring(0, 150)}...` 
-                      : review.content[language]}
+                  <p className="text-gray-700 mb-4">
+                    {review.content[language]}
                   </p>
                   
-                  {review.content[language].length > 150 && (
-                    <button className="text-[#FF8C00] text-sm hover:underline">
-                      {reviewTitles[language].seeMore}
-                    </button>
+                  {review.images.length > 0 && (
+                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                      {review.images.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          alt={`Review image ${idx+1}`}
+                          className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                        />
+                      ))}
+                    </div>
                   )}
-                </motion.div>
-              ))}
-            </div>
-            
-            <div className="text-center mt-10">
-              <button className="bg-white border border-[#FF8C00] text-[#FF8C00] hover:bg-[#FF8C00] hover:text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
-                {reviewTitles[language].writeButton}
-              </button>
-            </div>
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-1 text-gray-500">
+                      {review.tags.map((tag, idx) => (
+                        <span key={idx} className="bg-gray-100 rounded-full px-3 py-1">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center text-gray-500">
+                      <button 
+                        className={`flex items-center ${helpfulReviews.includes(review.id) ? 'text-[#FF8C00]' : 'hover:text-[#FF8C00]'} transition-colors mr-2`}
+                        onClick={() => handleHelpfulClick(review.id)}
+                      >
+                        <ThumbsUp className="w-4 h-4 mr-1" />
+                        {reviewTitles[language].helpful}
+                      </button>
+                      <span className="text-xs">
+                        {helpfulReviews.includes(review.id) ? review.helpfulCount + 1 : review.helpfulCount} {reviewTitles[language].helpfulCount}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
-      </main>
-
-      <footer className="bg-gray-50 py-8 mt-16">
-        <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-          <p>© 2025 IRUTOMO All Rights Reserved.</p>
         </div>
-      </footer>
+
+        {/* All Reviews (Sample) */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-[#FF8C00]">
+              {reviewTitles[language].allReviews}
+            </h2>
+            <p className="text-gray-500">
+              {reviews.length} {reviewTitles[language].reviewCount}
+            </p>
+          </div>
+          
+          <div className="space-y-6">
+            {reviews.map((review, index) => (
+              <motion.div
+                key={review.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-lg border border-gray-200 p-5"
+              >
+                <div className="flex items-center mb-3">
+                  <img
+                    src={review.userAvatar}
+                    alt={review.userName}
+                    className="w-8 h-8 rounded-full mr-3 object-cover"
+                  />
+                  <div>
+                    <div className="font-medium">{review.userName}</div>
+                    <div className="text-xs text-gray-500 flex items-center">
+                      {new Date(review.date).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="ml-auto">
+                    {renderStars(review.rating)}
+                  </div>
+                </div>
+                
+                <h3 className="font-medium mb-2">
+                  {review.restaurantName[language]}
+                </h3>
+                
+                <p className="text-gray-700 text-sm mb-3">
+                  {expandedReviews.includes(review.id) 
+                    ? review.content[language]
+                    : review.content[language].length > 150 
+                      ? `${review.content[language].substring(0, 150)}...` 
+                      : review.content[language]}
+                </p>
+                
+                {review.content[language].length > 150 && (
+                  <button 
+                    className="text-[#FF8C00] text-sm hover:underline"
+                    onClick={() => handleExpandReview(review.id)}
+                  >
+                    {expandedReviews.includes(review.id) 
+                      ? (language === 'ko' ? '접기' : language === 'ja' ? '折りたたむ' : 'Collapse') 
+                      : reviewTitles[language].seeMore}
+                  </button>
+                )}
+              </motion.div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-10">
+            <button 
+              className="bg-white border border-[#FF8C00] text-[#FF8C00] hover:bg-[#FF8C00] hover:text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              onClick={handleWriteReview}
+            >
+              {reviewTitles[language].writeButton}
+            </button>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 } 

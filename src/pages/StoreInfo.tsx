@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TubelightNavbar } from '../components/ui/TubelightNavbar';
+import { useNavigate } from 'react-router-dom';
 import { Store, MapPin, Phone, Globe, Clock, UtensilsCrossed, Cake, Info } from 'lucide-react';
 
 interface StoreInfoProps {
@@ -10,19 +10,7 @@ interface StoreInfoProps {
 }
 
 export default function StoreInfo({ language, onLanguageChange, onBack }: StoreInfoProps) {
-  const NAV_ITEMS = [
-    {
-      name: language === 'ko' ? '점포 정보' : language === 'ja' ? '店舗情報' : 'Store Info',
-      url: '#',
-      icon: Store,
-    },
-    {
-      name: language === 'ko' ? '홈으로 돌아가기' : language === 'ja' ? 'ホームに戻る' : 'Back to Home',
-      url: '#',
-      icon: Info,
-      onClick: onBack,
-    },
-  ];
+  const navigate = useNavigate();
 
   const areaNames = {
     ko: {
@@ -202,7 +190,6 @@ export default function StoreInfo({ language, onLanguageChange, onBack }: StoreI
             </div>
           </div>
         </div>
-        <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
       </header>
 
       <main className="container mx-auto px-4 py-12">

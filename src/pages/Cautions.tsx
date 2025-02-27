@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TubelightNavbar } from '../components/ui/TubelightNavbar';
 import { AlertCircle, Clock, XCircle, DoorClosed, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CautionsProps {
   language: 'ko' | 'ja' | 'en';
@@ -10,19 +10,7 @@ interface CautionsProps {
 }
 
 export default function Cautions({ language, onLanguageChange, onBack }: CautionsProps) {
-  const NAV_ITEMS = [
-    {
-      name: language === 'ko' ? '주의사항' : language === 'ja' ? '注意事項' : 'Cautions',
-      url: '#',
-      icon: AlertCircle,
-    },
-    {
-      name: language === 'ko' ? '홈으로 돌아가기' : language === 'ja' ? 'ホームに戻る' : 'Back to Home',
-      url: '#',
-      icon: Info,
-      onClick: onBack,
-    },
-  ];
+  const navigate = useNavigate();
 
   const cautionItems = [
     {
@@ -147,7 +135,6 @@ export default function Cautions({ language, onLanguageChange, onBack }: Caution
             </div>
           </div>
         </div>
-        <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
       </header>
 
       <main className="container mx-auto px-4 py-12">

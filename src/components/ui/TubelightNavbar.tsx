@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DivideIcon as LucideIcon, Globe, Home, Info, AlertCircle, Store, Star } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useScreenSize } from "../hooks/use-screen-size";
 import { Sidebar, SidebarBody, SidebarLink, LanguageButton } from "./Sidebar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import NavHeader from "./NavHeader";
 
 interface NavItem {
   name: string;
@@ -24,8 +25,27 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
   const [activeTab, setActiveTab] = useState(items[0].name);
   const [isMobile, setIsMobile] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const lastScrollTop = useRef(0);
   const screenSize = useScreenSize();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // アクティブなタブを現在のURLから設定
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const currentItem = items.find(item => 
+      item.url === currentPath || 
+      (item.url.startsWith('#') && currentPath === '/')
+    );
+    
+    if (currentItem) {
+      setActiveTab(currentItem.name);
+    } else {
+      // デフォルトはホーム
+      setActiveTab(items[0].name);
+    }
+  }, [location.pathname, items]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -36,6 +56,33 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // スクロール時のハンバーガーメニュー制御
+  useEffect(() => {
+    const handleScroll = () => {
+      const st = window.scrollY;
+      
+      // スクロール方向を判定
+      if (st > lastScrollTop.current && st > 50) {
+        // 下スクロール時
+        setIsScrolled(true);
+        // メニューが開いていたら閉じる
+        if (isMenuOpen) {
+          setIsMenuOpen(false);
+        }
+      } else if (st < lastScrollTop.current) {
+        // 上スクロール時
+        setIsScrolled(false);
+      }
+      
+      lastScrollTop.current = st <= 0 ? 0 : st;
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isMenuOpen]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
     e.preventDefault();
@@ -50,9 +97,7 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
     } else if (item.url.startsWith('/')) {
       navigate(item.url);
     }
-    if (isMobile) {
-      setIsMenuOpen(false);
-    }
+    setIsMenuOpen(false);
   };
 
   // 言語切り替えハンドラー
@@ -68,10 +113,21 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
     setIsMenuOpen(false);
   };
 
+  // ナビゲーションアイテムにホームを追加
+  const navItemsWithHome = [
+    {
+      name: language === 'ko' ? '홈' : language === 'ja' ? 'ホーム' : 'Home',
+      url: '/',
+      icon: Home,
+      onClick: goToHome
+    },
+    ...items
+  ];
+
   // サイドバー用のナビゲーションアイテム
   const sidebarItems = [
     {
-      name: "ホーム",
+      name: language === 'ko' ? '홈' : language === 'ja' ? 'ホーム' : 'Home',
       url: "/",
       icon: <Home size={20} />,
       onClick: (e: any) => {
@@ -101,57 +157,35 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
     }))
   ];
 
+  // NavHeaderで使用するアイテム
+  const navHeaderItems = navItemsWithHome.map(item => ({
+    name: item.name,
+    url: item.url,
+    onClick: item.onClick
+  }));
+
   return (
-    <nav className="relative bg-white border-b overflow-hidden">
+    <motion.nav 
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-white border-b overflow-hidden transition-all duration-300",
+        isScrolled ? "shadow-md transform -translate-y-1/2 opacity-0" : "shadow-sm transform translate-y-0 opacity-100"
+      )}
+      animate={{ 
+        y: isScrolled ? -20 : 0,
+        opacity: isScrolled ? 0.95 : 1,
+      }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="container mx-auto px-4 relative">
-        <div className="flex items-center justify-between py-3">
+        <div className="flex items-center justify-between h-16">
           {/* Logo - クリックでホームに戻る */}
-          <div className="cursor-pointer" onClick={goToHome}>
-            <img src="irulogo-hidariue.svg" alt="IRUTOMO" className="h-8" />
+          <div className="cursor-pointer flex items-center" onClick={goToHome}>
+            <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-8" />
           </div>
 
-          {/* デスクトップメニュー - 常に表示 */}
-          <div className="flex-1 items-center justify-center gap-3 flex ml-4">
-            {items.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.name;
-
-              return (
-                <a
-                  key={item.name}
-                  href={item.url}
-                  onClick={(e) => handleClick(e, item)}
-                  className={cn(
-                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-                    "text-gray-600 hover:text-[#FF8C00]",
-                    isActive && "text-[#FF8C00]",
-                  )}
-                >
-                  <span className="hidden md:inline">{item.name}</span>
-                  <span className="md:hidden">
-                    <Icon size={18} strokeWidth={2.5} />
-                  </span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="lamp"
-                      className="absolute inset-0 w-full bg-[#FF8C00]/5 rounded-full -z-10"
-                      initial={false}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 30,
-                      }}
-                    >
-                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#FF8C00] rounded-t-full">
-                        <div className="absolute w-12 h-6 bg-[#FF8C00]/20 rounded-full blur-md -top-2 -left-2" />
-                        <div className="absolute w-8 h-6 bg-[#FF8C00]/20 rounded-full blur-md -top-1" />
-                        <div className="absolute w-4 h-4 bg-[#FF8C00]/20 rounded-full blur-sm top-0 left-2" />
-                      </div>
-                    </motion.div>
-                  )}
-                </a>
-              );
-            })}
+          {/* ナビゲーションメニュー - ロゴと同じ行に配置 */}
+          <div className="hidden md:flex items-center justify-center flex-1 px-4">
+            <NavHeader items={navHeaderItems} language={language} />
           </div>
 
           {/* ハンバーガーメニュー - 常に右上に表示 */}
@@ -201,7 +235,12 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
             </Sidebar>
           </div>
         </div>
+        
+        {/* モバイル専用のナビゲーションメニュー */}
+        <div className="md:hidden flex justify-center py-2">
+          <NavHeader items={navHeaderItems} language={language} />
+        </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 }

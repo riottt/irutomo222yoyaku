@@ -5,6 +5,7 @@ import { Globe, Phone, Clock, CreditCard, Info, Store, Star, AlertCircle, Settin
 import { ParticleButton } from './components/ui/particle-button';
 import { renderCanvas } from './components/ui/canvas';
 import { TubelightNavbar } from './components/ui/TubelightNavbar';
+import { getCommonNavItems } from './lib/navigation';
 
 interface LandingPageProps {
   language: 'ko' | 'ja' | 'en';
@@ -172,38 +173,13 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
     renderCanvas();
   }, []);
 
-  const NAV_ITEMS = [
-    {
-      name: language === 'ko' ? '서비스 소개' : language === 'ja' ? 'サービス紹介' : 'Service Introduction',
-      url: '#service',
-      icon: Info,
-      onClick: goToServiceIntroduction
-    },
-    {
-      name: language === 'ko' ? '옵션' : language === 'ja' ? 'オプション' : 'Options',
-      url: '#options',
-      icon: CreditCard,
-      onClick: goToOptions
-    },
-    {
-      name: language === 'ko' ? '주의사항' : language === 'ja' ? '注意事項' : 'Cautions',
-      url: '#cautions',
-      icon: Clock,
-      onClick: goToCautions
-    },
-    {
-      name: language === 'ko' ? '점포 정보' : language === 'ja' ? '店舗情報' : 'Store Info',
-      url: '#stores',
-      icon: MapPin,
-      onClick: goToStoreInfo
-    },
-    {
-      name: language === 'ko' ? '리뷰' : language === 'ja' ? 'レビュー' : 'Reviews',
-      url: '#reviews',
-      icon: Calendar,
-      onClick: goToReviews
-    },
-  ];
+  const NAV_ITEMS = getCommonNavItems(language, {
+    goToServiceIntroduction,
+    goToOptions,
+    goToCautions,
+    goToStoreInfo,
+    goToReviews
+  });
 
   return (
     <div className="min-h-screen bg-white">
@@ -213,25 +189,24 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
         id="canvas"
       ></canvas>
 
-      {/* Header */}
-      <header className="relative bg-gradient-to-r from-[#ff8b00] to-[#da1b60]">
-        <div className="container mx-auto px-4">
-          <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
-        </div>
-      </header>
+      {/* Header - ナビゲーションバーを一番上に固定 */}
+      <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
 
-      {/* Hero Section */}
-      <section className="relative py-16 overflow-hidden">
+      {/* ヘッダーの高さ分のスペース確保 */}
+      <div className="h-16 md:h-16"></div>
+
+      {/* Hero Section - 背景を白に変更 */}
+      <section className="bg-white py-24 relative">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center relative z-10">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight text-[#FF8C00]">
               {language === 'ko'
                 ? '일본 전화번호 없이도\n원하는 맛집 예약 가능!'
                 : language === 'ja'
                 ? '日本の電話番号がなくても\n行きたいお店を予約可能！'
                 : '日本の電話番号がなくても\n行きたいお店を予約可能！'}
             </h1>
-            <p className="text-gray-600 text-lg mb-8">
+            <p className="text-gray-700 text-lg mb-8">
               {language === 'ko'
                 ? '일본의 인기 레스토랑은 전화로만 예약이 가능한 경우가 많습니다.\nIRUTOMO가 여러분의 맛있는 여행을 도와드립니다.'
                 : language === 'ja'
@@ -266,8 +241,11 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
       </section>
 
       {/* Features */}
-      <section id="service" className="py-12 bg-white/80 backdrop-blur-sm">
+      <section id="service" className="py-20 bg-white backdrop-blur-sm">
         <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            {language === 'ko' ? '서비스 특징' : language === 'ja' ? 'サービスの特徴' : 'Service Features'}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center transform hover:scale-105 transition-transform duration-300">
               <div className="bg-[#FF8C00]/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
