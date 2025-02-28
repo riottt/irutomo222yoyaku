@@ -74,6 +74,28 @@ const CAUTION_ITEMS = {
       title: 'ノーショーペナルティ',
       description: 'ノーショーの場合、今後のサービス利用が制限される可能性があります。',
     }
+  ],
+  en: [
+    {
+      title: 'No Cancellation',
+      description: 'Cancellations are not possible after reservation confirmation. Please book carefully.',
+    },
+    {
+      title: 'No Fee Refunds',
+      description: 'Reservation fees are non-refundable under any circumstances.',
+    },
+    {
+      title: 'Punctuality Required',
+      description: 'Reservations may be canceled if you do not arrive 10 minutes before your reserved time.',
+    },
+    {
+      title: 'No Party Size Changes',
+      description: 'Changes to the number of guests are not possible. A new reservation is required.',
+    },
+    {
+      title: 'No-Show Penalty',
+      description: 'No-shows may result in restrictions on future service use.',
+    }
   ]
 };
 
@@ -123,6 +145,29 @@ const REVIEWS = {
       comment: '手数料は少しかかりますが、それだけの価値のあるサービスです。日本の電話番号がなくても人気店を予約できるのが大きな利点です。',
       restaurant: 'ラーメン一蘭'
     }
+  ],
+  en: [
+    {
+      name: 'Jennifer Kim',
+      date: '2025.02.15',
+      rating: 5,
+      comment: 'I was able to book the restaurant I wanted even without speaking Japanese! The staff were friendly and their quick response was impressive.',
+      restaurant: 'Sushi Mizutani'
+    },
+    {
+      name: 'David Lee',
+      date: '2025.02.10',
+      rating: 5,
+      comment: 'I needed a reservation urgently and they confirmed it within hours. Such a convenient service.',
+      restaurant: 'Yakitori Honpo'
+    },
+    {
+      name: 'Michelle Park',
+      date: '2025.02.05',
+      rating: 4,
+      comment: 'There is a small fee but the service is worth it. Being able to book popular restaurants without a Japanese phone number is a huge advantage.',
+      restaurant: 'Ramen Ichiran'
+    }
   ]
 };
 
@@ -152,6 +197,20 @@ const OPTIONS = {
     },
     {
       title: '合計人数9～12名（大人、子供含めたご利用人数）',
+      price: 3000
+    }
+  ],
+  en: [
+    {
+      title: 'Total 1-4 people (including adults and children)',
+      price: 1000
+    },
+    {
+      title: 'Total 5-8 people (including adults and children)',
+      price: 2000
+    },
+    {
+      title: 'Total 9-12 people (including adults and children)',
       price: 3000
     }
   ]
