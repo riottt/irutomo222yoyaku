@@ -517,6 +517,7 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
       </section>
 
       {/* Footer */}
+      {/*}
       <footer className="bg-gray-50 py-8">
         <div className="container mx-auto px-4">
           <p className="text-center text-gray-600 text-sm">
