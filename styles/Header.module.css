@@ -1,0 +1,11 @@
+.mobileMenu {
+  position: absolute;
+  top: 100%; /* ヘッダーの下に配置 */
+  right: 0;
+  width: 250px;
+  background-color: var(--background-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* 他の要素より前面に表示 */
+  max-height: calc(100vh - 80px); /* ビューポート高さからヘッダー高さを引いた分 */
+  overflow-y: auto; /* 必要に応じてスクロール可能に */
+} 
