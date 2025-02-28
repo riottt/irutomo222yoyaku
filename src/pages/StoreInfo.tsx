@@ -314,7 +314,7 @@ export default function StoreInfo({ language, onLanguageChange, onBack }: StoreI
                 ? 'IRUTOMOのパートナーになって韓国人観光客にあなたのレストランを紹介してみませんか。パートナーシップのお問い合わせは以下のメールアドレスまでご連絡ください。' 
                 : 'Become a partner with IRUTOMO and introduce your restaurant to Korean tourists. Please contact us at the email below for partnership inquiries.'}
             </p>
-            <p className="text-[#FF8C00] font-medium">partner@irutomo.com</p>
+            <p className="text-[#FF8C00] font-medium">gespokrofficial@gmail.com</p>
           </div>
         </motion.div>
       </main>
