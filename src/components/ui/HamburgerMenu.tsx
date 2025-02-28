@@ -46,21 +46,21 @@ export function HamburgerMenu({
   return (
     <div className="relative z-50">
       {/* ハンバーガーアイコン */}
-      <div 
-        className="md:hidden flex items-center justify-center cursor-pointer"
+      <button 
+        className="flex items-center justify-center cursor-pointer p-2"
         onClick={toggleMenu}
         aria-label="メニューを開く"
-        role="button"
+        type="button"
       >
         <Menu
           className="text-[#FF8C00] hover:text-[#E67E00] transition-colors"
           size={24}
         />
-      </div>
+      </button>
 
       {/* サイドバーメニュー */}
       <Sidebar open={isMenuOpen} setOpen={setIsMenuOpen}>
-        <SidebarBody>
+        <SidebarBody className="w-full h-full">
           <div className="flex flex-col space-y-2">
             {/* メインナビゲーション項目 */}
             {mainNavItems.map((item) => (

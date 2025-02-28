@@ -158,33 +158,11 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "flex items-center justify-end z-20",
+          "flex items-center justify-end",
           className
         )}
         {...props}
       >
-        <motion.div 
-          className="w-10 h-10 flex items-center justify-center cursor-pointer"
-          onClick={() => setOpen(!open)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          aria-label="メニューを開く"
-          aria-expanded={open}
-          aria-controls="sidebar-menu"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setOpen(!open);
-            }
-          }}
-        >
-          <Menu
-            className="text-[#FF8C00] hover:text-[#E67E00] transition-colors"
-            size={24}
-          />
-        </motion.div>
         <AnimatePresence>
           {open && (
             <>
@@ -194,7 +172,7 @@ export const MobileSidebar = ({
                 animate={{ opacity: 0.5 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 bg-black z-[99]"
+                className="fixed inset-0 bg-black z-[999]"
                 onClick={handleOverlayClick}
                 aria-hidden="true"
               />
@@ -210,7 +188,7 @@ export const MobileSidebar = ({
                   stiffness: 300,
                 }}
                 className={cn(
-                  "fixed h-full w-full md:w-[300px] top-0 right-0 bg-white shadow-lg z-[100] flex flex-col",
+                  "fixed h-full w-full md:w-[300px] top-0 right-0 bg-white shadow-lg z-[1000] flex flex-col",
                   className
                 )}
                 style={{ maxHeight: '100vh', overflowY: 'auto' }}
@@ -219,23 +197,16 @@ export const MobileSidebar = ({
                   <div className="text-xl font-bold text-[#FF8C00] cursor-pointer" onClick={handleLogoClick}>
                     <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-6" />
                   </div>
-                  <motion.div
+                  <motion.button
                     className="cursor-pointer text-[#FF8C00] hover:text-[#E67E00] transition-colors"
                     onClick={() => setOpen(false)}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     aria-label="メニューを閉じる"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setOpen(false);
-                      }
-                    }}
+                    type="button"
                   >
                     <X size={24} />
-                  </motion.div>
+                  </motion.button>
                 </div>
                 <div className="flex-1 overflow-y-auto py-4 px-4" id="sidebar-menu" role="navigation" aria-label="サイドバーメニュー">
                   {children}

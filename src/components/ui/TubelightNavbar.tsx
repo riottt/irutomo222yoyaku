@@ -80,7 +80,7 @@ export function TubelightNavbar({ items, mobileItems, className, language, onLan
   return (
     <motion.nav 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 bg-white border-b overflow-hidden transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-50 bg-white border-b transition-all duration-300",
         isScrolled ? "shadow-md" : "shadow-sm"
       )}
       animate={{ 
@@ -100,18 +100,8 @@ export function TubelightNavbar({ items, mobileItems, className, language, onLan
             <NavHeader items={navHeaderItems} language={language} />
           </div>
 
-          {/* モバイル用ハンバーガーメニュー */}
-          <div className="md:hidden">
-            <HamburgerMenu 
-              items={mobileItems || items} 
-              language={language} 
-              onLanguageChange={onLanguageChange}
-              activeTab={activeTab}
-            />
-          </div>
-
-          {/* デスクトップ用ハンバーガーメニュー - 非表示 */}
-          <div className="hidden md:block">
+          {/* ハンバーガーメニュー - 1つだけ表示 */}
+          <div>
             <HamburgerMenu 
               items={mobileItems || items} 
               language={language} 
