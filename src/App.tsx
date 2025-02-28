@@ -66,7 +66,7 @@ function PageWithNavigation({ language, onLanguageChange }) {
       />
       
       {/* ヘッダーの高さ分のスペースを確保 */}
-      <div className="h-16 md:h-16"></div>
+      <div className="h-16 md:h-16 mt-2"></div>
       
       {/* メインコンテンツ - Outletを使用して子ルートのコンポーネントをレンダリング */}
       <main className="container mx-auto px-4 py-6 flex-grow">
@@ -123,7 +123,7 @@ function StandalonePageWrapper({ language, Component }) {
         language={language} 
         onLanguageChange={undefined} 
       />
-      <div className="h-16 md:h-16"></div>
+      <div className="h-16 md:h-16 mt-2"></div>
       <Component language={language} />
       <Footer language={language} />
     </>

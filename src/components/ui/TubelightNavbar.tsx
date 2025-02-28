@@ -64,16 +64,10 @@ export function TubelightNavbar({ items, mobileItems, className, language, onLan
     const handleScroll = () => {
       const st = window.scrollY;
       
-      // スクロール方向を判定
-      if (st > lastScrollTop.current && st > 50) {
-        // 下スクロール時
+      // スクロール位置に応じてシャドウを変更
+      if (st > 20) {
         setIsScrolled(true);
-        // メニューが開いていたら閉じる
-        if (isMenuOpen) {
-          setIsMenuOpen(false);
-        }
-      } else if (st < lastScrollTop.current) {
-        // 上スクロール時
+      } else {
         setIsScrolled(false);
       }
       
@@ -84,7 +78,7 @@ export function TubelightNavbar({ items, mobileItems, className, language, onLan
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isMenuOpen]);
+  }, []);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
     e.preventDefault();
@@ -170,11 +164,10 @@ export function TubelightNavbar({ items, mobileItems, className, language, onLan
     <motion.nav 
       className={cn(
         "fixed top-0 left-0 right-0 z-50 bg-white border-b overflow-hidden transition-all duration-300",
-        isScrolled ? "shadow-md transform -translate-y-1/2 opacity-0" : "shadow-sm transform translate-y-0 opacity-100"
+        isScrolled ? "shadow-md" : "shadow-sm"
       )}
       animate={{ 
-        y: isScrolled ? -20 : 0,
-        opacity: isScrolled ? 0.95 : 1,
+        opacity: 1,
       }}
       transition={{ duration: 0.3 }}
     >

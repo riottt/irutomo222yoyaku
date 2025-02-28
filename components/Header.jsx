@@ -104,12 +104,6 @@ const Header = () => {
             className={`${styles.mobileMenuButton} ${mobileMenuOpen ? styles.mobileMenuOpen : ''}`} 
             onClick={toggleMobileMenu}
             aria-label={mobileMenuOpen ? "メニューを閉じる" : "メニューを開く"}
-            style={{ 
-              position: 'fixed', 
-              top: '15px',
-              right: '20px',
-              zIndex: 999999 
-            }}
           >
             <span></span>
             <span></span>
