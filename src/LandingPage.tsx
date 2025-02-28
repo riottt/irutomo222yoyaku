@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Globe, Phone, Clock, CreditCard, Info, Store, Star, AlertCircle, Settings, XCircle, Camera, UtensilsCrossed, Cake, DoorClosed, MapPin, Calendar } from 'lucide-react';
 import { ParticleButton } from './components/ui/particle-button';
 import { TubelightNavbar } from './components/ui/TubelightNavbar';
-import { getCommonNavItems } from './lib/navigation';
+import { getHeaderNavItems, getMobileNavItems } from './lib/navigation';
 
 interface LandingPageProps {
   language: 'ko' | 'ja' | 'en';
@@ -160,6 +160,7 @@ const OPTIONS = {
 export default function LandingPage({ language, onLanguageChange }: LandingPageProps) {
   const navigate = useNavigate();
 
+  const goToHome = () => navigate('/');
   const goToServiceIntroduction = () => navigate('/service-introduction');
   const goToOptions = () => navigate('/options');
   const goToCautions = () => navigate('/cautions');
@@ -167,19 +168,38 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
   const goToReviews = () => navigate('/reviews');
   const goToSearch = () => navigate('/search');
   const goToStores = () => navigate('/stores');
+  const goToReservation = () => navigate('/reservation');
+  const goToLogin = () => navigate('/login');
 
-  const NAV_ITEMS = getCommonNavItems(language, {
+  // ヘッダー用のナビゲーションアイテム（限定バージョン）
+  const HEADER_NAV_ITEMS = getHeaderNavItems(language, {
+    goToHome,
+    goToServiceIntroduction,
+    goToStoreInfo,
+    goToReviews
+  });
+
+  // ハンバーガーメニュー用のナビゲーションアイテム（全アイテム）
+  const MOBILE_NAV_ITEMS = getMobileNavItems(language, {
+    goToHome,
     goToServiceIntroduction,
     goToOptions,
     goToCautions,
     goToStoreInfo,
-    goToReviews
+    goToReviews,
+    goToReservation,
+    goToLogin
   });
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header - ナビゲーションバーを一番上に固定 */}
-      <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
+      <TubelightNavbar 
+        items={HEADER_NAV_ITEMS} 
+        mobileItems={MOBILE_NAV_ITEMS} 
+        language={language} 
+        onLanguageChange={onLanguageChange} 
+      />
 
       {/* ヘッダーの高さ分のスペース確保 */}
       <div className="h-16 md:h-16"></div>

@@ -12,16 +12,18 @@ interface NavItem {
   url: string;
   icon: any;
   onClick?: () => void;
+  isMainNav?: boolean;
 }
 
 interface NavBarProps {
   items: NavItem[];
+  mobileItems?: NavItem[]; // モバイルメニュー用の別アイテム（オプション）
   className?: string;
   language: 'ko' | 'ja' | 'en';
   onLanguageChange?: (lang: 'ko' | 'ja' | 'en') => void;
 }
 
-export function TubelightNavbar({ items, className, language, onLanguageChange }: NavBarProps) {
+export function TubelightNavbar({ items, mobileItems, className, language, onLanguageChange }: NavBarProps) {
   const [activeTab, setActiveTab] = useState(items[0].name);
   const [isMobile, setIsMobile] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -113,52 +115,52 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
     setIsMenuOpen(false);
   };
 
-  // ナビゲーションアイテムにホームを追加
-  const navItemsWithHome = [
-    {
-      name: language === 'ko' ? '홈' : language === 'ja' ? 'ホーム' : 'Home',
-      url: '/',
-      icon: Home,
-      onClick: goToHome
-    },
-    ...items
-  ];
-
   // サイドバー用のナビゲーションアイテム
-  const sidebarItems = [
-    {
-      name: language === 'ko' ? '홈' : language === 'ja' ? 'ホーム' : 'Home',
-      url: "/",
-      icon: <Home size={20} />,
-      onClick: (e: any) => {
-        e.preventDefault();
-        navigate('/');
-        setIsMenuOpen(false);
-      }
-    },
-    ...items.map(item => ({
-      name: item.name,
-      url: item.url,
-      icon: <item.icon size={20} />,
-      onClick: (e: any) => {
-        e.preventDefault();
-        if (item.onClick) {
-          item.onClick();
-        } else if (item.url.startsWith('#')) {
-          const element = document.querySelector(item.url);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-          }
-        } else if (item.url.startsWith('/')) {
-          navigate(item.url);
+  const sidebarItems = mobileItems ? mobileItems.map(item => ({
+    name: item.name,
+    url: item.url,
+    icon: <item.icon size={20} />,
+    isMainNav: item.isMainNav,
+    onClick: (e: any) => {
+      e.preventDefault();
+      if (item.onClick) {
+        item.onClick();
+      } else if (item.url.startsWith('#')) {
+        const element = document.querySelector(item.url);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
         }
-        setIsMenuOpen(false);
+      } else if (item.url.startsWith('/')) {
+        navigate(item.url);
       }
-    }))
-  ];
+      setIsMenuOpen(false);
+    }
+  })) : items.map(item => ({
+    name: item.name,
+    url: item.url,
+    icon: <item.icon size={20} />,
+    onClick: (e: any) => {
+      e.preventDefault();
+      if (item.onClick) {
+        item.onClick();
+      } else if (item.url.startsWith('#')) {
+        const element = document.querySelector(item.url);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else if (item.url.startsWith('/')) {
+        navigate(item.url);
+      }
+      setIsMenuOpen(false);
+    }
+  }));
+
+  // メインナビ項目と管理メニュー項目を分離
+  const mainNavItems = sidebarItems.filter(item => item.isMainNav !== false);
+  const hamburgerOnlyItems = sidebarItems.filter(item => item.isMainNav === false);
 
   // NavHeaderで使用するアイテム
-  const navHeaderItems = navItemsWithHome.map(item => ({
+  const navHeaderItems = items.map(item => ({
     name: item.name,
     url: item.url,
     onClick: item.onClick
@@ -193,7 +195,29 @@ export function TubelightNavbar({ items, className, language, onLanguageChange }
             <Sidebar open={isMenuOpen} setOpen={setIsMenuOpen}>
               <SidebarBody>
                 <div className="flex flex-col space-y-2">
-                  {sidebarItems.map((item) => (
+                  {/* メインナビゲーション項目 */}
+                  {mainNavItems.map((item) => (
+                    <SidebarLink
+                      key={item.name}
+                      link={{
+                        name: item.name,
+                        url: item.url,
+                        icon: item.icon,
+                        onClick: item.onClick
+                      }}
+                      className={activeTab === item.name ? "bg-[#FFC458]/10 text-[#FF8C00]" : ""}
+                    />
+                  ))}
+                  
+                  {/* ハンバーガーメニュー専用の項目がある場合はセパレーターを表示 */}
+                  {hamburgerOnlyItems.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-500 mb-2 px-4">管理メニュー</p>
+                    </div>
+                  )}
+                  
+                  {/* ハンバーガーメニュー専用の項目 */}
+                  {hamburgerOnlyItems.map((item) => (
                     <SidebarLink
                       key={item.name}
                       link={{

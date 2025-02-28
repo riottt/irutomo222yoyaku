@@ -12,7 +12,7 @@ import Cautions from './pages/Cautions';
 import StoreInfo from './pages/StoreInfo';
 import Reviews from './pages/Reviews';
 import { TubelightNavbar } from './components/ui/TubelightNavbar';
-import { getCommonNavItems } from './lib/navigation';
+import { getCommonNavItems, getHeaderNavItems, getMobileNavItems } from './lib/navigation';
 import AdminDashboard from './pages/AdminDashboard';
 import ReservationSuccess from './pages/ReservationSuccess';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -24,28 +24,43 @@ function PageWithNavigation({ language, onLanguageChange }) {
   const navigate = useNavigate();
   
   // 各ページへの共通遷移関数
+  const goToHome = () => navigate('/');
   const goToServiceIntroduction = () => navigate('/service-introduction');
   const goToOptions = () => navigate('/options');
   const goToCautions = () => navigate('/cautions');
   const goToStoreInfo = () => navigate('/store-info');
   const goToReviews = () => navigate('/reviews');
-  const goToAdmin = () => navigate('/admin');  // 必ず定義して渡す
+  const goToAdmin = () => navigate('/admin');
+  const goToReservation = () => navigate('/restaurant-search');
+  const goToLogin = () => navigate('/login');
   
-  // 共通ナビゲーションアイテム
-  const NAV_ITEMS = getCommonNavItems(language, {
+  // ヘッダー用のナビゲーションアイテム（限定バージョン）
+  const HEADER_NAV_ITEMS = getHeaderNavItems(language, {
+    goToHome,
+    goToServiceIntroduction,
+    goToStoreInfo,
+    goToReviews
+  });
+
+  // ハンバーガーメニュー用のナビゲーションアイテム（全アイテム）
+  const MOBILE_NAV_ITEMS = getMobileNavItems(language, {
+    goToHome,
     goToServiceIntroduction,
     goToOptions,
     goToCautions,
     goToStoreInfo,
     goToReviews,
-    goToAdmin  // 明示的に指定して管理者ダッシュボードへのリンクを常に表示
+    goToReservation,
+    goToLogin,
+    goToAdmin
   });
   
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* 共通ヘッダー */}
       <TubelightNavbar 
-        items={NAV_ITEMS} 
+        items={HEADER_NAV_ITEMS}
+        mobileItems={MOBILE_NAV_ITEMS}
         language={language} 
         onLanguageChange={onLanguageChange} 
       />
@@ -66,8 +81,49 @@ function PageWithNavigation({ language, onLanguageChange }) {
 
 // 個別ページのラッパー
 function StandalonePageWrapper({ language, Component }) {
+  const navigate = useNavigate();
+  
+  // 各ページへの共通遷移関数
+  const goToHome = () => navigate('/');
+  const goToServiceIntroduction = () => navigate('/service-introduction');
+  const goToOptions = () => navigate('/options');
+  const goToCautions = () => navigate('/cautions');
+  const goToStoreInfo = () => navigate('/store-info');
+  const goToReviews = () => navigate('/reviews');
+  const goToAdmin = () => navigate('/admin');
+  const goToReservation = () => navigate('/restaurant-search');
+  const goToLogin = () => navigate('/login');
+  
+  // ヘッダー用のナビゲーションアイテム（限定バージョン）
+  const HEADER_NAV_ITEMS = getHeaderNavItems(language, {
+    goToHome,
+    goToServiceIntroduction,
+    goToStoreInfo,
+    goToReviews
+  });
+
+  // ハンバーガーメニュー用のナビゲーションアイテム（全アイテム）
+  const MOBILE_NAV_ITEMS = getMobileNavItems(language, {
+    goToHome,
+    goToServiceIntroduction,
+    goToOptions,
+    goToCautions,
+    goToStoreInfo,
+    goToReviews,
+    goToReservation,
+    goToLogin,
+    goToAdmin
+  });
+  
   return (
     <>
+      <TubelightNavbar 
+        items={HEADER_NAV_ITEMS}
+        mobileItems={MOBILE_NAV_ITEMS}
+        language={language} 
+        onLanguageChange={undefined} 
+      />
+      <div className="h-16 md:h-16"></div>
       <Component language={language} />
       <Footer language={language} />
     </>
@@ -189,10 +245,7 @@ function App() {
       <Routes>
         {/* スタンドアロンページ */}
         <Route path="/" element={
-          <>
-            <LandingPage language={currentLanguage} onLanguageChange={handleLanguageChange} />
-            <Footer language={currentLanguage} />
-          </>
+          <LandingPage language={currentLanguage} onLanguageChange={handleLanguageChange} />
         } />
         
         <Route path="/privacy-policy" element={
