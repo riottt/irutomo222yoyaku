@@ -100,13 +100,25 @@ export function TubelightNavbar({ items, mobileItems, className, language, onLan
             <NavHeader items={navHeaderItems} language={language} />
           </div>
 
-          {/* ハンバーガーメニュー - 新しいコンポーネントを使用 */}
-          <HamburgerMenu 
-            items={mobileItems || items} 
-            language={language} 
-            onLanguageChange={onLanguageChange}
-            activeTab={activeTab}
-          />
+          {/* モバイル用ハンバーガーメニュー */}
+          <div className="md:hidden">
+            <HamburgerMenu 
+              items={mobileItems || items} 
+              language={language} 
+              onLanguageChange={onLanguageChange}
+              activeTab={activeTab}
+            />
+          </div>
+
+          {/* デスクトップ用ハンバーガーメニュー - 非表示 */}
+          <div className="hidden md:block">
+            <HamburgerMenu 
+              items={mobileItems || items} 
+              language={language} 
+              onLanguageChange={onLanguageChange}
+              activeTab={activeTab}
+            />
+          </div>
         </div>
       </div>
     </motion.nav>

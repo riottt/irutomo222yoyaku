@@ -213,8 +213,9 @@ export const MobileSidebar = ({
                   "fixed h-full w-full md:w-[300px] top-0 right-0 bg-white shadow-lg z-[100] flex flex-col",
                   className
                 )}
+                style={{ maxHeight: '100vh', overflowY: 'auto' }}
               >
-                <div className="flex justify-between items-center p-4 border-b">
+                <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
                   <div className="text-xl font-bold text-[#FF8C00] cursor-pointer" onClick={handleLogoClick}>
                     <img src="/irulogo-hidariue.svg" alt="IRUTOMO" className="h-6" />
                   </div>
@@ -236,7 +237,7 @@ export const MobileSidebar = ({
                     <X size={24} />
                   </motion.div>
                 </div>
-                <div className="flex-1 overflow-y-auto py-4" id="sidebar-menu" role="navigation" aria-label="サイドバーメニュー">
+                <div className="flex-1 overflow-y-auto py-4 px-4" id="sidebar-menu" role="navigation" aria-label="サイドバーメニュー">
                   {children}
                 </div>
               </motion.div>
