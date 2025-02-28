@@ -1,11 +1,204 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: var(--background-color, #ffffff);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.scrolled {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  height: 40px;
+}
+
+.logo img {
+  height: 100%;
+  width: auto;
+}
+
+.desktopNav {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .desktopNav {
+    display: block;
+  }
+  
+  .desktopNav ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .desktopNav li {
+    margin-left: 20px;
+  }
+  
+  .desktopNav a {
+    color: var(--text-color, #333);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .desktopNav a:hover {
+    color: var(--primary-color, #ff8c00);
+  }
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+}
+
+.mobileMenuButton {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 15px;
+  z-index: 1001;
+  position: relative;
+}
+
+.mobileMenuButton span {
+  width: 100%;
+  height: 2px;
+  background-color: var(--text-color, #333);
+  transition: all 0.3s ease;
+}
+
+.mobileMenuOpen span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobileMenuOpen span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobileMenuOpen span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+@media (min-width: 768px) {
+  .mobileMenuButton {
+    display: none;
+  }
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.overlayVisible {
+  opacity: 1;
+  visibility: visible;
+}
+
 .mobileMenu {
-  position: absolute;
-  top: 100%; /* ヘッダーの下に配置 */
+  position: fixed;
+  top: 0;
   right: 0;
-  width: 250px;
-  background-color: var(--background-color);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000; /* 他の要素より前面に表示 */
-  max-height: calc(100vh - 80px); /* ビューポート高さからヘッダー高さを引いた分 */
-  overflow-y: auto; /* 必要に応じてスクロール可能に */
+  width: 80%;
+  max-width: 320px;
+  height: 100vh;
+  background-color: var(--background-color, #ffffff);
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  overflow-y: auto;
+  padding: 80px 20px 20px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.mobileMenuVisible {
+  transform: translateX(0);
+}
+
+.mobileMenuHeader {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 60px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--text-color, #333);
+  cursor: pointer;
+  display: none;
+}
+
+.mobileNav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mobileNav li {
+  margin-bottom: 15px;
+}
+
+.mobileNav a {
+  color: var(--text-color, #333);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 18px;
+  display: block;
+  padding: 10px 0;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.mobileNav a:hover, .mobileNav a:active {
+  color: var(--primary-color, #ff8c00);
+  background-color: rgba(255, 140, 0, 0.1);
+  padding-left: 10px;
+}
+
+.mobileLangSwitch {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
 } 
