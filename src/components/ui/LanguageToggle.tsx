@@ -3,21 +3,21 @@ import { motion } from "framer-motion";
 import { cn } from "../../lib/utils";
 
 interface LanguageToggleProps {
-  language: 'ko' | 'ja';
+  language: 'ko' | 'ja' | 'en';
   onToggle: () => void;
   className?: string;
 }
 
 export function LanguageToggle({ language, onToggle, className }: LanguageToggleProps) {
   const isKorean = language === 'ko';
+  const isJapanese = language === 'ja';
+  const isEnglish = language === 'en';
 
   return (
     <div
       className={cn(
-        "flex w-20 h-8 p-1 rounded-full cursor-pointer transition-all duration-300",
-        isKorean
-          ? "bg-[#FF8C00]/5 border border-[#FF8C00]/20"
-          : "bg-white border border-[#FF8C00]/20",
+        "flex w-28 h-8 p-1 rounded-full cursor-pointer transition-all duration-300",
+        "bg-[#FF8C00]/5 border border-[#FF8C00]/20",
         className
       )}
       onClick={onToggle}
@@ -29,21 +29,31 @@ export function LanguageToggle({ language, onToggle, className }: LanguageToggle
           className={cn(
             "flex justify-center items-center w-8 h-6 rounded-full text-sm font-medium transition-transform duration-300",
             isKorean
-              ? "transform translate-x-0 bg-[#FF8C00] text-white"
-              : "transform translate-x-9 bg-[#FF8C00] text-white"
+              ? "bg-[#FF8C00] text-white"
+              : "text-[#FF8C00]"
           )}
         >
-          {isKorean ? "한" : "日"}
+          한
         </div>
         <div
           className={cn(
             "flex justify-center items-center w-8 h-6 rounded-full text-sm font-medium transition-transform duration-300",
-            isKorean
-              ? "text-[#FF8C00]"
-              : "transform -translate-x-9 text-[#FF8C00]"
+            isJapanese
+              ? "bg-[#FF8C00] text-white"
+              : "text-[#FF8C00]"
           )}
         >
-          {isKorean ? "日" : "한"}
+          日
+        </div>
+        <div
+          className={cn(
+            "flex justify-center items-center w-8 h-6 rounded-full text-sm font-medium transition-transform duration-300",
+            isEnglish
+              ? "bg-[#FF8C00] text-white"
+              : "text-[#FF8C00]"
+          )}
+        >
+          En
         </div>
       </div>
       <motion.div
