@@ -6,7 +6,7 @@
   height: 60px;
   background-color: var(--background-color, #ffffff);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  z-index: 9980;
   transition: all 0.3s ease;
 }
 
@@ -81,7 +81,7 @@
   cursor: pointer;
   padding: 0;
   margin-left: 15px;
-  z-index: 1001;
+  z-index: 9985;
   position: relative;
 }
 
@@ -115,9 +115,9 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 9000;
+  z-index: 9990;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -126,6 +126,21 @@
 .overlayVisible {
   opacity: 1;
   visibility: visible;
+}
+
+/* モバイルメニューポータルコンテナ */
+.mobileMenuPortal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9995;
+  pointer-events: none;
+}
+
+.mobileMenuPortal > * {
+  pointer-events: auto;
 }
 
 .mobileMenu {
@@ -139,35 +154,53 @@
   box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   overflow-y: auto;
-  padding: 80px 20px 20px;
+  padding: 0;
   transform: translateX(100%);
   transition: transform 0.3s ease-in-out;
+  will-change: transform;
 }
 
 .mobileMenuVisible {
   transform: translateX(0);
 }
 
-.mobileMenuHeader {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 60px;
+/* モバイルメニューのロゴ部分 */
+.mobileMenuLogo {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px 20px;
+  background-color: var(--primary-color, #ff8c00);
+  color: white;
+  height: 60px;
+}
+
+.mobileMenuLogo img {
+  height: 40px;
+  width: auto;
 }
 
 .closeButton {
   background: transparent;
   border: none;
   font-size: 24px;
-  color: var(--text-color, #333);
+  color: white;
   cursor: pointer;
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.mobileNav {
+  padding: 20px;
 }
 
 .mobileNav ul {
@@ -177,28 +210,71 @@
 }
 
 .mobileNav li {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .mobileNav a {
   color: var(--text-color, #333);
   text-decoration: none;
   font-weight: 500;
-  font-size: 18px;
-  display: block;
-  padding: 10px 0;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
   transition: all 0.2s ease;
   border-radius: 8px;
+}
+
+.menuIcon {
+  margin-right: 10px;
+  font-size: 18px;
 }
 
 .mobileNav a:hover, .mobileNav a:active {
   color: var(--primary-color, #ff8c00);
   background-color: rgba(255, 140, 0, 0.1);
-  padding-left: 10px;
+}
+
+/* アクティブなメニュー項目 */
+.activeMenuItem a {
+  color: var(--primary-color, #ff8c00);
+  background-color: rgba(255, 140, 0, 0.1);
+}
+
+/* ハンバーガーメニュー専用の項目のスタイル */
+.hamburgerOnly a {
+  border-left: 3px solid var(--primary-color, #ff8c00);
+  padding-left: 12px;
+}
+
+.hamburgerOnly a:hover, .hamburgerOnly a:active {
+  border-left: 3px solid var(--primary-color, #ff8c00);
+  padding-left: 15px;
+  background-color: rgba(255, 140, 0, 0.15);
+}
+
+/* メニューセパレーター */
+.menuSeparator {
+  position: relative;
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+  text-align: center;
+}
+
+.separatorText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #666;
 }
 
 .mobileLangSwitch {
   margin-top: 30px;
-  padding-top: 20px;
+  padding: 20px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 } 

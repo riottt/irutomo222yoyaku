@@ -8,6 +8,7 @@ import MobileMenu from './MobileMenu';
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const router = useRouter();
   
   // スクロール検知のためのイベントリスナー
   useEffect(() => {
@@ -55,6 +56,11 @@ const Header = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
   
+  // 現在のパスがアクティブかどうかをチェック
+  const isActive = (path) => {
+    return router.pathname === path ? styles.activeLink : '';
+  };
+  
   return (
     <header className={`${styles.header} ${isScrolled ? styles.scrolled : ''}`}>
       <div className={styles.container}>
@@ -66,26 +72,27 @@ const Header = () => {
           </Link>
         </div>
         
+        {/* デスクトップナビゲーション - 簡略化して基本項目のみ表示 */}
         <nav className={styles.desktopNav}>
           <ul>
-            <li>
+            <li className={isActive('/')}>
               <Link href="/">
                 <a>ホーム</a>
               </Link>
             </li>
-            <li>
-              <Link href="/about">
-                <a>サービス紹介</a>
+            <li className={isActive('/reservation')}>
+              <Link href="/reservation">
+                <a>予約へ進む</a>
               </Link>
             </li>
-            <li>
+            <li className={isActive('/restaurants')}>
               <Link href="/restaurants">
                 <a>飲食店一覧</a>
               </Link>
             </li>
-            <li>
-              <Link href="/contact">
-                <a>お問い合わせ</a>
+            <li className={isActive('/login')}>
+              <Link href="/login">
+                <a>ログイン</a>
               </Link>
             </li>
           </ul>
@@ -97,6 +104,12 @@ const Header = () => {
             className={`${styles.mobileMenuButton} ${mobileMenuOpen ? styles.mobileMenuOpen : ''}`} 
             onClick={toggleMobileMenu}
             aria-label={mobileMenuOpen ? "メニューを閉じる" : "メニューを開く"}
+            style={{ 
+              position: 'fixed', 
+              top: '15px',
+              right: '20px',
+              zIndex: 999999 
+            }}
           >
             <span></span>
             <span></span>

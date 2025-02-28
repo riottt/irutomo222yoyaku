@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Globe, Phone, Clock, CreditCard, Info, Store, Star, AlertCircle, Settings, XCircle, Camera, UtensilsCrossed, Cake, DoorClosed, MapPin, Calendar } from 'lucide-react';
 import { ParticleButton } from './components/ui/particle-button';
-import { renderCanvas } from './components/ui/canvas';
 import { TubelightNavbar } from './components/ui/TubelightNavbar';
 import { getCommonNavItems } from './lib/navigation';
 
@@ -169,10 +168,6 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
   const goToSearch = () => navigate('/search');
   const goToStores = () => navigate('/stores');
 
-  useEffect(() => {
-    renderCanvas();
-  }, []);
-
   const NAV_ITEMS = getCommonNavItems(language, {
     goToServiceIntroduction,
     goToOptions,
@@ -183,12 +178,6 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Canvas Animation */}
-      <canvas
-        className="fixed inset-0 pointer-events-none"
-        id="canvas"
-      ></canvas>
-
       {/* Header - ナビゲーションバーを一番上に固定 */}
       <TubelightNavbar items={NAV_ITEMS} language={language} onLanguageChange={onLanguageChange} />
 
