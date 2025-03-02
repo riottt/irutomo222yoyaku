@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Check, AlertCircle, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Check, AlertCircle } from 'lucide-react';
 
 interface OptionsProps {
   language: 'ko' | 'ja' | 'en';
@@ -11,10 +10,58 @@ interface OptionsProps {
 
 export default function Options({ 
   language, 
-  onLanguageChange,
   onBack
 }: OptionsProps) {
-  const navigate = useNavigate();
+  // 言語に基づいて金額を変換（最新の為替レートに基づく）
+  const getConvertedAmount = useCallback((amount: number, lang: 'ko' | 'ja' | 'en') => {
+    // 円 -> ドル (150円 = 1ドル)
+    if (lang === 'en') return amount / 150;
+    // 円 -> ウォン (1円 = 9.7ウォン)
+    if (lang === 'ko') return amount * 9.7;
+    // デフォルトは円
+    return amount;
+  }, []);
+
+  // 通貨記号を取得
+  const getCurrencySymbol = useCallback((lang: 'ko' | 'ja' | 'en') => {
+    return lang === 'ko' ? '₩' : lang === 'en' ? '$' : '¥';
+  }, []);
+
+  // 数値をフォーマット
+  const formatAmount = useCallback((value: number, lang: 'ko' | 'ja' | 'en') => {
+    const locale = lang === 'ko' ? 'ko-KR' : lang === 'en' ? 'en-US' : 'ja-JP';
+    
+    if (lang === 'en') {
+      // 英語の場合は小数点以下2桁まで表示
+      return new Intl.NumberFormat(locale, { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2 
+      }).format(value);
+    }
+    
+    return new Intl.NumberFormat(locale).format(value);
+  }, []);
+  
+  // 言語に応じた通貨表示名を取得
+  const getCurrencyName = (lang: 'ko' | 'ja' | 'en'): string => {
+    if (lang === 'ko') return '한국 원(KRW)';
+    if (lang === 'en') return '미국 달러(USD)';
+    return '일본 엔(JPY)';
+  };
+  
+  // 言語に応じた通貨表示名を取得（日本語）
+  const getCurrencyNameJa = (lang: 'ko' | 'ja' | 'en'): string => {
+    if (lang === 'ko') return '韓国ウォン（KRW）';
+    if (lang === 'en') return '米ドル（USD）';
+    return '日本円（JPY）';
+  };
+  
+  // 言語に応じた通貨表示名を取得（英語）
+  const getCurrencyNameEn = (lang: 'ko' | 'ja' | 'en'): string => {
+    if (lang === 'ko') return 'Korean Won (KRW)';
+    if (lang === 'en') return 'US Dollars (USD)';
+    return 'Japanese Yen (JPY)';
+  };
 
   const basicOptions = [
     {
@@ -204,7 +251,8 @@ export default function Options({
                   <div className="bg-[#FFC458]/10 p-6">
                     <h3 className="font-semibold text-lg mb-2">{option.title[language]}</h3>
                     <p className="text-[#FF8C00] font-bold text-2xl">
-                      ¥{option.price.toLocaleString()}
+                      {getCurrencySymbol(language)}
+                      {formatAmount(getConvertedAmount(option.price, language), language)}
                     </p>
                   </div>
                   <div className="p-6">
@@ -246,7 +294,8 @@ export default function Options({
                     </div>
                     <div className="mt-4 md:mt-0 md:ml-6 flex-shrink-0">
                       <p className="text-[#FF8C00] font-bold text-xl">
-                        ¥{option.price.toLocaleString()}
+                        {getCurrencySymbol(language)}
+                        {formatAmount(getConvertedAmount(option.price, language), language)}
                       </p>
                     </div>
                   </div>
@@ -265,10 +314,10 @@ export default function Options({
                 <ul className="space-y-3 text-gray-700">
                   <li>
                     {language === 'ko' 
-                      ? '• 모든 요금은 일본 엔(JPY)으로 표시되며, 세금이 포함된 금액입니다.' 
+                      ? '• 모든 요금은 ' + getCurrencyName(language) + '으로 표시되며, 세금이 포함된 금액입니다.' 
                       : language === 'ja' 
-                      ? '• すべての料金は日本円（JPY）で表示され、税込み金額です。' 
-                      : '• All prices are displayed in Japanese Yen (JPY) and include tax.'}
+                      ? '• すべての料金は' + getCurrencyNameJa(language) + 'で表示され、税込み金額です。' 
+                      : '• All prices are displayed in ' + getCurrencyNameEn(language) + ' and include tax.'}
                   </li>
                   <li>
                     {language === 'ko' 
