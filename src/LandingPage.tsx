@@ -228,7 +228,7 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
   const goToSearch = () => navigate('/search');
   const goToStores = () => navigate('/stores');
   const goToReservation = () => navigate('/reservation');
-  const goToLogin = () => navigate('/login');
+  const goToAdmin = () => navigate('/admin');
 
   // ヘッダー用のナビゲーションアイテム（限定バージョン）
   const HEADER_NAV_ITEMS = getHeaderNavItems(language, {
@@ -247,7 +247,7 @@ export default function LandingPage({ language, onLanguageChange }: LandingPageP
     goToStoreInfo,
     goToReviews,
     goToReservation,
-    goToLogin
+    goToAdmin
   });
 
   return (

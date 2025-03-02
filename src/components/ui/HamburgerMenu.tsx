@@ -9,6 +9,7 @@ interface NavItem {
   icon: any;
   onClick?: () => void;
   isMainNav?: boolean;
+  isAdmin?: boolean;
 }
 
 interface HamburgerMenuProps {
@@ -36,7 +37,7 @@ export function HamburgerMenu({
 
   // メインナビ項目と管理メニュー項目を分離
   const mainNavItems = items.filter(item => item.isMainNav !== false);
-  const hamburgerOnlyItems = items.filter(item => item.isMainNav === false);
+  const adminItems = items.filter(item => item.isAdmin === true);
 
   // ハンバーガーメニューアイコンをクリックしたときの処理
   const toggleMenu = () => {
@@ -89,15 +90,15 @@ export function HamburgerMenu({
               />
             ))}
             
-            {/* ハンバーガーメニュー専用の項目がある場合はセパレーターを表示 */}
-            {hamburgerOnlyItems.length > 0 && (
+            {/* 管理者メニュー項目がある場合はセパレーターを表示 */}
+            {adminItems.length > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="text-sm text-gray-500 mb-2">管理メニュー</p>
               </div>
             )}
             
-            {/* ハンバーガーメニュー専用の項目 */}
-            {hamburgerOnlyItems.map((item) => (
+            {/* 管理者メニュー項目 */}
+            {adminItems.map((item) => (
               <SidebarLink
                 key={item.name}
                 link={{

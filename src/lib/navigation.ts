@@ -121,7 +121,6 @@ export const getMobileNavItems = (language: 'ko' | 'ja' | 'en', goToFunctions: {
   goToReviews: () => void;
   goToAdmin?: () => void;
   goToReservation?: () => void;
-  goToLogin?: () => void;
 }): NavItem[] => {
   const { 
     goToHome, 
@@ -131,8 +130,7 @@ export const getMobileNavItems = (language: 'ko' | 'ja' | 'en', goToFunctions: {
     goToStoreInfo, 
     goToReviews, 
     goToAdmin,
-    goToReservation,
-    goToLogin
+    goToReservation
   } = goToFunctions;
   
   const navItems = [
@@ -173,40 +171,11 @@ export const getMobileNavItems = (language: 'ko' | 'ja' | 'en', goToFunctions: {
       url: '/reservation',
       icon: Calendar,
       onClick: goToReservation,
-      isMainNav: false
+      isMainNav: true
     });
   }
   
-  // ログインページへのリンク
-  if (goToLogin) {
-    navItems.push({
-      name: language === 'ko' ? '로그인' : language === 'ja' ? 'ログイン' : 'Login',
-      url: '/login',
-      icon: Home,
-      onClick: goToLogin,
-      isMainNav: false
-    });
-  }
-  
-  // オプションページへのリンク
-  navItems.push({
-    name: language === 'ko' ? '옵션' : language === 'ja' ? 'オプション' : 'Options',
-    url: '/options',
-    icon: CreditCard,
-    onClick: goToOptions,
-    isMainNav: false
-  });
-  
-  // 注意事項ページへのリンク
-  navItems.push({
-    name: language === 'ko' ? '주의사항' : language === 'ja' ? '注意事項' : 'Cautions',
-    url: '/cautions',
-    icon: Clock,
-    onClick: goToCautions,
-    isMainNav: false
-  });
-  
-  // 管理者ダッシュボードへのリンク
+  // 管理者ダッシュボードへのリンク（管理メニュー配下に唯一残すアイテム）
   if (goToAdmin) {
     navItems.push({
       name: language === 'ko' ? '관리자 대시보드' : language === 'ja' ? '管理者ダッシュボード' : 'Admin Dashboard',
