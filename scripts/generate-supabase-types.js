@@ -1,4 +1,31 @@
-// Supabaseの型定義
+// Supabaseの型定義を生成するためのスクリプト
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESモジュールで__dirnameを使用するための設定
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+console.log('Supabaseの型定義を生成します...');
+
+try {
+  // プロジェクトのルートディレクトリ
+  const projectRoot = path.join(__dirname, '..');
+  
+  // src/typesディレクトリが存在するか確認
+  const typesDir = path.join(projectRoot, 'src', 'types');
+  if (!fs.existsSync(typesDir)) {
+    console.log('src/typesディレクトリを作成します...');
+    fs.mkdirSync(typesDir, { recursive: true });
+  }
+  
+  // 型定義ファイルのパス
+  const typesFilePath = path.join(typesDir, 'supabase.ts');
+  
+  // 型定義ファイルの内容
+  const typesContent = `// Supabaseの型定義
 export type Json =
   | string
   | number
@@ -353,3 +380,14 @@ export interface Database {
 
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
 export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
+`;
+  
+  // 型定義ファイルを書き込む
+  fs.writeFileSync(typesFilePath, typesContent);
+  console.log(`型定義ファイルを生成しました: ${typesFilePath}`);
+  
+  console.log('Supabaseの型定義の生成が完了しました。');
+} catch (error) {
+  console.error('型定義の生成中にエラーが発生しました:', error.message);
+  process.exit(1);
+} 

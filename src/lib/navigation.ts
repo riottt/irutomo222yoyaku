@@ -161,6 +161,20 @@ export const getMobileNavItems = (language: 'ko' | 'ja' | 'en', goToFunctions: {
       icon: Calendar,
       onClick: goToReviews,
       isMainNav: true
+    },
+    {
+      name: language === 'ko' ? '옵션' : language === 'ja' ? 'オプション' : 'Options',
+      url: '/options',
+      icon: CreditCard,
+      onClick: goToOptions,
+      isMainNav: true
+    },
+    {
+      name: language === 'ko' ? '주의사항' : language === 'ja' ? '注意事項' : 'Cautions',
+      url: '/cautions',
+      icon: Clock,
+      onClick: goToCautions,
+      isMainNav: true
     }
   ];
   
