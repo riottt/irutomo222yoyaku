@@ -13,9 +13,26 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     
+    <!-- セキュリティと広告ブロッカー対策 -->
+    <meta name="resource-type" content="payment" />
+    <meta name="referrer" content="origin" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'" />
+    <meta name="permissions-policy" content="interest-cohort=(), payment=self https://www.paypal.com" />
+    
+    <!-- PayPal DNS Prefetch - 広告ブロッカー対策 -->
+    <link rel="dns-prefetch" href="https://www.paypal.com" />
+    <link rel="dns-prefetch" href="https://www.paypalobjects.com" />
+    <link rel="preconnect" href="https://www.paypal.com" crossorigin />
+    <link rel="preconnect" href="https://www.paypalobjects.com" crossorigin />
+    
+    <!-- PayPalリソースの読み込み -->
+    <link rel="preload" href="https://www.paypalobjects.com/api/checkout.js" as="script" />
+    
     <!-- PWA Support -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#ff9900" />
+    <!-- 非推奨タグから推奨タグへ更新 -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="IRU TOMO" />
@@ -66,9 +83,69 @@
       }
     }
     </script>
+    
+    <!-- インライン広告ブロッカー検出と代替ロード -->
+    <script>
+      // PayPal SDK読み込み状態を追跡
+      window.paypalSDKLoaded = false;
+      window.resourceLoadErrors = [];
+      
+      // リソース読み込みエラーを監視
+      window.addEventListener('error', function(e) {
+        // URLからリソースタイプを確認
+        var url = e.target && e.target.src || e.filename || '';
+        if (!url) return;
+        
+        // エラーの記録
+        window.resourceLoadErrors.push(url);
+        
+        // PayPalまたは指紋関連のエラーを検出
+        if (url.includes('paypal') || url.includes('fingerprint')) {
+          console.warn('Payment related script blocked:', url);
+          document.body.classList.add('payment-blocked');
+        }
+      }, true, { capture: true, passive: true });
+      
+      // 3秒後にPayPal SDKのロード状態を確認
+      setTimeout(function() {
+        if (!window.paypalSDKLoaded && window.resourceLoadErrors.length > 0) {
+          console.warn('Payment scripts may be blocked');
+          document.body.classList.add('payment-blocked');
+        }
+      }, 3000);
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- ブロックされたスクリプトの代替処理 -->
+    <script>
+      // 変数の重複宣言エラーを防止（このスクリプトはサイトのJSモジュールより先に実行される）
+      // テスト用の空オブジェクト/関数を宣言
+      window.BrowserInfo = window.BrowserInfo || {};
+      window.debug = window.debug || { log: function() {} };
+      window.BLOCK_CSS_VALUE = window.BLOCK_CSS_VALUE || {};
+      window.BLOCK_TYPES = window.BLOCK_TYPES || {};
+      window.ICON_BADGE_PERIODS = window.ICON_BADGE_PERIODS || {};
+      window.MESSAGE_TYPES = window.MESSAGE_TYPES || {};
+      window.storageService = window.storageService || {};
+      window.serverApi = window.serverApi || {};
+      window.guidSeed = window.guidSeed || '';
+      window.Dialog = window.Dialog || function() {};
+      window.Overlay = window.Overlay || function() {};
+      window.elementToOverlay = window.elementToOverlay || function() {};
+      window.currentWindow = window.currentWindow || window;
+      window.observeDomChanges = window.observeDomChanges || function() {};
+      window.ExtendedRuleParser = window.ExtendedRuleParser || function() {};
+      window.popupScriptEmbedded = window.popupScriptEmbedded || false;
+      window.init = window.init || function() {};
+      
+      // PayPal SDK読み込み成功時のコールバック
+      window.paypalSDKLoaded = function() {
+        console.log('PayPal SDK loaded successfully');
+        window.paypalSDKLoaded = true;
+      };
+    </script>
   </body>
 </html>
