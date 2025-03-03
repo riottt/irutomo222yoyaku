@@ -9,8 +9,6 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "populate-db": "tsx scripts/populate-restaurants.ts",
-    "start-mcp": "node scripts/start-mcp-server.js",
-    "start-production-mcp": "node scripts/start-production-mcp-server.js",
     "apply-migrations": "node scripts/apply-migrations.js",
     "setup-supabase": "node scripts/setup-supabase-local.js",
     "apply-sql": "node scripts/apply-sql.js",
@@ -23,9 +21,6 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "@modelcontextprotocol/server-postgres": "^0.6.2",
-    "@number-flow/react": "^0.5.5",
-    "@paypal/react-paypal-js": "^8.1.4",
     "@radix-ui/react-slot": "^1.0.2",
     "@stripe/react-stripe-js": "^2.5.1",
     "@stripe/stripe-js": "^3.0.7",

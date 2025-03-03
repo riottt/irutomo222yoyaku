@@ -23,12 +23,8 @@
 - EmailJS: ^4.4.1（メール送信）
 - UUID: ^9.0.1（一意識別子生成）
 
-## モデルコンテキストプロトコル
-- @modelcontextprotocol/server-postgres: ^0.6.2
-- @number-flow/react: ^0.5.5
-
 ## 支払い処理
-- PayPal: @paypal/react-paypal-js ^8.1.4
+- Stripe: @stripe/react-stripe-js ^2.5.2, @stripe/stripe-js ^2.4.0
 
 ## 開発ツール
 - ESLint: ^9.9.1
@@ -57,14 +53,12 @@
 - `npm run generate-types`: Supabase型定義生成
 - `npm run start-supabase`: Supabaseコンテナ起動
 - `npm run stop-supabase`: Supabaseコンテナ停止
-- `npm run start-mcp`: MCPサーバー起動
-- `npm run start-production-mcp`: 本番MCPサーバー起動
 
 ## 重要な制約事項
 - Supabase接続情報は `src/lib/supabase.ts` で一元管理されています
 - 本番環境へのデータベースマイグレーションには専用スクリプトを使用してください
 - `npm run apply-production-sql` コマンドで本番環境のマイグレーションを適用します
-- 支払い機能はPayPalのみをサポートしています（Stripe統合は準備中）
+- 支払い機能はStripeのみをサポートしています
 - UI/UXの変更時はアクセシビリティへの配慮が必須です（aria-label, titleなど）
 - 共通UIコンポーネントは `src/components/ui/` に配置してください
 - 新しいカスタムフックは `src/components/hooks/` に配置してください

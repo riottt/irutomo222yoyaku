@@ -1,6 +1,5 @@
-// このプロジェクトでは決済にPayPalのみを使用することになりました。
-// Stripe関連のコードは削除されました。
-// すべての決済処理は PayPalButtons コンポーネントを使用しています。
+// このプロジェクトでは決済にStripeを使用することになりました。
+// 決済処理は StripePaymentForm コンポーネントを使用しています。
 // 詳細は src/components/PaymentModal.tsx を参照してください。
 
 import { loadStripe } from '@stripe/stripe-js';

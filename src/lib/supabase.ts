@@ -18,36 +18,6 @@ export const supabase = createClient<Database>(
   supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5b3l6aWVodGVraHBlcmdxenRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA2NjU2MjgsImV4cCI6MjA1NjI0MTYyOH0.8X_4oNt3raXl2sK2MV6VWcLoWwyYHu0DguoPbiC2W-0'
 );
 
-// MCP接続用の設定
-export const mcpConnectionString = import.meta.env.VITE_SUPABASE_CONNECTION_STRING;
-
-// MCP接続が設定されているかチェック
-export const isMcpConfigured = () => {
-  return !!mcpConnectionString;
-};
-
-// MCP接続のステータスを確認する関数
-export const checkMcpStatus = async () => {
-  try {
-    // MCPサーバーが起動しているかどうかを確認するための簡易的なチェック
-    // 実際の実装では、MCPサーバーのヘルスチェックエンドポイントなどを使用するとよい
-    console.log('MCPサーバーの接続確認中...');
-    console.log('接続文字列:', mcpConnectionString ? '設定済み' : '未設定');
-    
-    if (!mcpConnectionString) {
-      return { success: false, error: 'MCP接続文字列が設定されていません' };
-    }
-    
-    // ここでMCPサーバーの接続確認を行う
-    // 実際の実装では、MCPサーバーのAPIを呼び出すなどの方法で確認する
-    
-    return { success: true, message: 'MCP接続が設定されています' };
-  } catch (error) {
-    console.error('MCP接続確認エラー:', error);
-    return { success: false, error };
-  }
-};
-
 // 接続テスト用の関数
 export const testConnection = async () => {
   try {
@@ -69,10 +39,6 @@ export const testConnection = async () => {
     
     console.log('接続成功! レストランデータの取得:', data);
     
-    // MCP接続のステータスも確認
-    const mcpStatus = await checkMcpStatus();
-    console.log('MCP接続ステータス:', mcpStatus);
-    
     // 追加テスト: レストラン全件数を取得
     try {
       const { count, error: countError } = await supabase
@@ -88,7 +54,7 @@ export const testConnection = async () => {
       console.warn('レストラン数取得中に例外が発生:', e);
     }
     
-    return { success: true, data, mcpStatus };
+    return { success: true, data };
   } catch (error) {
     console.error('Connection test exception:', error);
     return { success: false, error };
