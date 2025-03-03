@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -88,6 +88,10 @@ const StripeLogo = () => (
   </svg>
 );
 
+// Stripe API URL定数を明示的に定義
+const STRIPE_API_URL = import.meta.env.VITE_STRIPE_API_URL || 'http://localhost:3001';
+const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+
 export default function StripePaymentForm({
   amount,
   onSuccess,
@@ -102,61 +106,278 @@ export default function StripePaymentForm({
   const [clientSecret, setClientSecret] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const [fetchAttempted, setFetchAttempted] = useState<boolean>(false);
+
+  // 重複リクエスト防止用のデバウンスタイマー
+  const debounceTimerRef = useRef<number | null>(null);
+  
+  // リクエスト識別子
+  const requestIdRef = useRef<string>(`req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`);
+  
+  // 最後のリクエスト時刻
+  const lastRequestTimeRef = useRef<number>(0);
+  
+  // デバウンス関数
+  const debounce = useCallback((fn: () => Promise<void>, delay: number) => {
+    // 前回のタイマーをクリア
+    if (debounceTimerRef.current !== null) {
+      window.clearTimeout(debounceTimerRef.current);
+      console.log('前回のデバウンスタイマーをクリアしました');
+    }
+    
+    // 最小間隔チェック
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTimeRef.current;
+    
+    if (lastRequestTimeRef.current > 0 && timeSinceLastRequest < 1000) {
+      console.log(`前回のリクエストから${timeSinceLastRequest}ms経過: 最小間隔(1000ms)未満のため、リクエストを遅延します`);
+      delay = Math.max(delay, 1000 - timeSinceLastRequest);
+    }
+    
+    // 新しいタイマーを設定
+    console.log(`${delay}ms後にリクエストを実行します`);
+    debounceTimerRef.current = window.setTimeout(() => {
+      lastRequestTimeRef.current = Date.now();
+      fn();
+    }, delay);
+  }, []);
 
   const getText = (textObj: Record<string, string>) => {
     return textObj[language] || textObj.en;
   };
 
-  useEffect(() => {
-    // 支払いインテントを取得
-    const fetchPaymentIntent = async () => {
-      setConnecting(true);
-      setError(null);
+  // 接続テストフラグ
+  const [serverConnectionTested, setServerConnectionTested] = useState(false);
+  const [serverConnectionStatus, setServerConnectionStatus] = useState<'untested' | 'success' | 'error'>('untested');
+
+  // サーバー接続テスト関数
+  const testServerConnection = useCallback(async () => {
+    if (serverConnectionTested) return;
+    
+    try {
+      console.log('サーバー接続テスト開始:', STRIPE_API_URL);
+      setServerConnectionStatus('untested');
       
-      try {
-        const response = await fetch(`${import.meta.env.VITE_STRIPE_API_URL}/create-payment-intent`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount,
-            metadata: {
-              reservationId: reservationData.id || '',
-              customerEmail: reservationData.email || '',
-              customerName: reservationData.name || '',
-              reservationDate: reservationData.date || '',
-              // その他の必要なメタデータ
-            },
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('支払いインテントの作成に失敗しました');
-        }
-
-        const data = await response.json();
-        setClientSecret(data.clientSecret);
-        setConnecting(false);
-      } catch (err) {
-        console.error('Stripe支払いインテント作成エラー:', err);
-        // CSPエラーを検出
-        const errorMessage = (err as Error).message || '';
-        if (errorMessage.includes('Content Security Policy') || errorMessage.includes('CSP') || 
-            errorMessage.includes('violates') || errorMessage.includes('Refused to connect')) {
-          setError(getText(localizedText.errorMessages.cspError));
-        } else {
-          setError(getText(localizedText.errorMessages.connectionFailed));
-        }
-        setConnecting(false);
-        onError(err as Error);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${STRIPE_API_URL}/ping`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        console.log('サーバー接続成功:', await response.json());
+        setServerConnectionStatus('success');
+      } else {
+        console.error('サーバー接続エラー:', response.status, response.statusText);
+        setServerConnectionStatus('error');
+        throw new Error(`サーバー応答エラー: ${response.status} ${response.statusText}`);
       }
-    };
-
-    if (amount > 0) {
-      fetchPaymentIntent();
+    } catch (error) {
+      console.error('サーバー接続テスト失敗:', error);
+      setServerConnectionStatus('error');
+      setError(`サーバー接続エラー: ${error.message}`);
+      
+      if (error.name === 'AbortError') {
+        setError('サーバー接続がタイムアウトしました。サーバーが起動しているか確認してください。');
+      } else if (error.message.includes('Failed to fetch')) {
+        setError('ネットワークエラー: APIサーバーに接続できません。サーバーが起動しているか確認してください。');
+      }
+    } finally {
+      setServerConnectionTested(true);
     }
-  }, [amount, reservationData, retryCount]);
+  }, [serverConnectionTested]);
+
+  // コンポーネントマウント時にサーバー接続テスト
+  useEffect(() => {
+    testServerConnection();
+  }, [testServerConnection]);
+
+  const fetchPaymentIntent = useCallback(async () => {
+    if (!amount || amount <= 0) {
+      console.error('無効な金額でfetchPaymentIntentが呼ばれました:', amount);
+      setError('無効な金額です');
+      return;
+    }
+
+    // サーバー接続エラーがある場合は処理しない
+    if (serverConnectionStatus === 'error') {
+      console.error('サーバー接続エラーのため処理をスキップします');
+      setError('サーバー接続エラーのため支払いを処理できません。ページを再読み込みしてください。');
+      return;
+    }
+
+    console.log('fetchPaymentIntent実行 - リクエスト準備:', {
+      amount,
+      metadata: reservationData,
+      apiUrl: STRIPE_API_URL
+    });
+
+    try {
+      setConnecting(true);
+      
+      // リクエストデータの準備
+      const requestData = {
+        amount,
+        metadata: {
+          ...reservationData,
+          requestId: requestIdRef.current,
+        }
+      };
+      
+      console.log('支払いインテント取得APIリクエスト送信:', {
+        url: `${STRIPE_API_URL}/create-payment-intent`,
+        method: 'POST',
+        data: requestData
+      });
+
+      // タイムアウト付きのAPIリクエスト
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      // APIリクエスト
+      const response = await fetch(`${STRIPE_API_URL}/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      // レスポンスヘッダーの取得と表示
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+
+      console.log('支払いレスポンスデバッグ');
+      console.log('レスポンスステータス:', response.status);
+      console.log('レスポンスヘッダー:', headers);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('支払いインテント作成失敗:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        throw new Error(`支払いの準備に失敗しました (${response.status}): ${errorText}`);
+      }
+
+      // JSONレスポンスの解析
+      const data = await response.json();
+      
+      // データ検証
+      if (!data || typeof data !== 'object') {
+        console.error('不正なレスポンスデータ:', data);
+        throw new Error('サーバーからの応答が不正です');
+      }
+      
+      if (!data.success) {
+        console.error('支払いインテント作成エラー:', data);
+        throw new Error(data.error || '支払いの準備に失敗しました');
+      }
+      
+      if (!data.clientSecret) {
+        console.error('クライアントシークレットがありません:', data);
+        throw new Error('支払い情報が不完全です');
+      }
+
+      console.log('成功レスポンス:', data);
+      
+      // 状態更新
+      setClientSecret(data.clientSecret);
+      setError('');
+      return data;
+    } catch (error) {
+      console.error('支払いインテント取得中にエラー発生:', error);
+      
+      // エラーメッセージの詳細化
+      if (error.name === 'AbortError') {
+        setError('リクエストがタイムアウトしました。ネットワーク接続を確認してください。');
+      } else if (error.message.includes('Failed to fetch')) {
+        setError('ネットワークエラー: Stripeサーバーに接続できません。サーバーが起動しているか確認してください。');
+      } else {
+        setError(error.message || '支払い処理の準備中にエラーが発生しました');
+      }
+      
+      throw error;
+    } finally {
+      setConnecting(false);
+    }
+  }, [amount, reservationData, serverConnectionStatus]);
+
+  useEffect(() => {
+    console.log('useEffect 実行 - 現在の状態:', {
+      amount, 
+      stripe: !!stripe, 
+      elements: !!elements, 
+      connecting, 
+      clientSecret: clientSecret ? `${clientSecret.substring(0, 10)}...` : null,
+      fetchAttempted,
+      requestId: requestIdRef.current
+    });
+
+    // すでに接続中か、クライアントシークレットがある場合はスキップ
+    if (connecting) {
+      console.log('すでに接続中のため、リクエストをスキップします');
+      return;
+    }
+
+    // 金額が無効な場合はスキップ
+    if (!amount || amount <= 0) {
+      console.log('金額が無効なため、リクエストをスキップします:', amount);
+      return;
+    }
+
+    // すでにクライアントシークレットがある場合はスキップ
+    if (clientSecret) {
+      console.log('既にクライアントシークレットがあります:', clientSecret.substring(0, 10) + '...');
+      return;
+    }
+
+    // すでに取得を試みた場合はスキップ
+    if (fetchAttempted) {
+      console.log('すでに取得を試みたため、リクエストをスキップします');
+      return;
+    }
+
+    // 必要なコンポーネントが揃っていない場合はスキップ
+    if (!stripe || !elements) {
+      console.log('Stripe/Elementsがまだロードされていません');
+      return;
+    }
+
+    // インテント取得フラグを設定
+    setFetchAttempted(true);
+    
+    // 支払いインテント取得処理をデバウンス
+    debounce(async () => {
+      try {
+        console.log('デバウンス後の支払いインテント取得開始:', {
+          amount,
+          requestId: requestIdRef.current
+        });
+        
+        await fetchPaymentIntent();
+      } catch (error) {
+        console.error('支払いインテント取得エラー:', error);
+        setError('支払い処理の準備中にエラーが発生しました。');
+        setFetchAttempted(false); // 再試行できるようにフラグをリセット
+      }
+    }, 300); // 300msのデバウンス
+    
+  }, [stripe, elements, amount, fetchPaymentIntent, debounce]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -210,11 +431,35 @@ export default function StripePaymentForm({
   };
 
   const handleRetry = () => {
+    console.log('手動再試行がクリックされました - 現在の試行回数:', retryCount);
+    
+    // 接続状態をリセット
+    setFetchAttempted(false);
+    setConnecting(false);
+    setClientSecret('');
+    setError('');
+    
+    // サーバー接続状態をリセット
+    setServerConnectionTested(false);
+    setServerConnectionStatus('untested');
+    
+    // 再試行カウントを更新
     setRetryCount(prev => prev + 1);
+    
+    // サーバー接続テストを再実行
+    testServerConnection();
   };
 
   // サーバー接続中の表示
   if (connecting) {
+    console.log('StripePaymentForm: ローディング状態です', { 
+      connecting, 
+      clientSecret: clientSecret ? clientSecret.substring(0, 10) + '...' : 'なし', 
+      stripe: !!stripe, 
+      elements: !!elements,
+      attemptCount 
+    });
+    
     return (
       <div className="text-center py-8">
         <div className="animate-pulse flex flex-col items-center justify-center">
@@ -222,6 +467,15 @@ export default function StripePaymentForm({
             <StripeLogo />
           </div>
           <p className="text-gray-600 mt-4">{getText(localizedText.loadingPayment)}</p>
+          <div className="mt-2 text-sm text-gray-500">
+            試行回数: {attemptCount}
+          </div>
+          <button 
+            onClick={handleRetry}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            手動で再試行
+          </button>
         </div>
       </div>
     );

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Elements } from '@stripe/react-stripe-js';
 import StripePaymentForm from './StripePaymentForm';
 import { stripePromise } from '../lib/stripe';
+import type { StripeElementsOptions } from '@stripe/stripe-js';
 
 // PayPalNamespaceの型定義をコメントアウト
 /*
@@ -105,6 +106,23 @@ export default function PaymentModal({ isOpen, onClose, onComplete, amount, lang
   // const [adBlockerDetected, setAdBlockerDetected] = useState(false);
   // const adBlockerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // const fallbackMethodUsed = useRef<boolean>(false);
+
+  // Stripeの初期化オプション
+  const stripeOptions: StripeElementsOptions = {
+    locale: language === 'ko' ? 'ko' : language === 'en' ? 'en' : 'ja',
+    appearance: {
+      theme: 'stripe',
+      variables: {
+        colorPrimary: '#0366d6',
+        colorBackground: '#ffffff',
+        colorText: '#30313d',
+        colorDanger: '#df1b41',
+        fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        spacingUnit: '4px',
+        borderRadius: '4px',
+      },
+    },
+  };
 
   // 支払い成功時の処理
   const handlePaymentSuccess = (details: PaymentDetails) => {
@@ -265,7 +283,7 @@ export default function PaymentModal({ isOpen, onClose, onComplete, amount, lang
         {/* 選択されたタブに基づいてコンテンツを表示 */}
         <div className="mt-4">
           {selectedTab === 'stripe' && (
-            <Elements stripe={stripePromise}>
+            <Elements stripe={stripePromise} options={stripeOptions}>
               <StripePaymentForm
                 amount={amount}
                 onSuccess={handlePaymentSuccess}
