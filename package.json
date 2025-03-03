@@ -18,7 +18,8 @@
     "apply-production-sql": "node scripts/apply-production-sql.js",
     "generate-types": "node scripts/generate-supabase-types.js",
     "start-supabase": "cd supabase && docker-compose up -d",
-    "stop-supabase": "cd supabase && docker-compose down"
+    "stop-supabase": "cd supabase && docker-compose down",
+    "start-stripe-server": "node scripts/setup-stripe-server.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -26,10 +27,14 @@
     "@number-flow/react": "^0.5.5",
     "@paypal/react-paypal-js": "^8.1.4",
     "@radix-ui/react-slot": "^1.0.2",
+    "@stripe/react-stripe-js": "^2.5.1",
+    "@stripe/stripe-js": "^3.0.7",
     "@supabase/supabase-js": "^2.39.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "cors": "^2.8.5",
     "emailjs-com": "^3.2.0",
+    "express": "^4.19.2",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.344.0",
     "pg": "^8.13.3",
@@ -37,6 +42,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.2.0",
+    "stripe": "^15.12.0",
     "tailwind-merge": "^2.6.0",
     "uuid": "^9.0.1"
   },

@@ -16,7 +16,7 @@
     <!-- セキュリティと広告ブロッカー対策 -->
     <meta name="resource-type" content="payment" />
     <meta name="referrer" content="origin" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: http://localhost:3001; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; connect-src 'self' https: http://localhost:3001" />
     <meta name="permissions-policy" content="interest-cohort=(), payment=self https://www.paypal.com" />
     
     <!-- PayPal DNS Prefetch - 広告ブロッカー対策 -->
