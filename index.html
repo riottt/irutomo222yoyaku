@@ -17,16 +17,7 @@
     <meta name="resource-type" content="payment" />
     <meta name="referrer" content="origin" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: http://localhost:3001; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; connect-src 'self' https: http://localhost:3001" />
-    <meta name="permissions-policy" content="interest-cohort=(), payment=self https://www.paypal.com" />
-    
-    <!-- PayPal DNS Prefetch - 広告ブロッカー対策 -->
-    <link rel="dns-prefetch" href="https://www.paypal.com" />
-    <link rel="dns-prefetch" href="https://www.paypalobjects.com" />
-    <link rel="preconnect" href="https://www.paypal.com" crossorigin />
-    <link rel="preconnect" href="https://www.paypalobjects.com" crossorigin />
-    
-    <!-- PayPalリソースの読み込み -->
-    <link rel="preload" href="https://www.paypalobjects.com/api/checkout.js" as="script" />
+    <meta name="permissions-policy" content="interest-cohort=()" />
     
     <!-- PWA Support -->
     <link rel="manifest" href="/manifest.json" />
@@ -84,10 +75,8 @@
     }
     </script>
     
-    <!-- インライン広告ブロッカー検出と代替ロード -->
+    <!-- リソース読み込みエラー検出用のスクリプト（PayPal関連コードを削除） -->
     <script>
-      // PayPal SDK読み込み状態を追跡
-      window.paypalSDKLoaded = false;
       window.resourceLoadErrors = [];
       
       // リソース読み込みエラーを監視
@@ -98,21 +87,7 @@
         
         // エラーの記録
         window.resourceLoadErrors.push(url);
-        
-        // PayPalまたは指紋関連のエラーを検出
-        if (url.includes('paypal') || url.includes('fingerprint')) {
-          console.warn('Payment related script blocked:', url);
-          document.body.classList.add('payment-blocked');
-        }
       }, true, { capture: true, passive: true });
-      
-      // 3秒後にPayPal SDKのロード状態を確認
-      setTimeout(function() {
-        if (!window.paypalSDKLoaded && window.resourceLoadErrors.length > 0) {
-          console.warn('Payment scripts may be blocked');
-          document.body.classList.add('payment-blocked');
-        }
-      }, 3000);
     </script>
   </head>
   <body>
@@ -140,12 +115,6 @@
       window.ExtendedRuleParser = window.ExtendedRuleParser || function() {};
       window.popupScriptEmbedded = window.popupScriptEmbedded || false;
       window.init = window.init || function() {};
-      
-      // PayPal SDK読み込み成功時のコールバック
-      window.paypalSDKLoaded = function() {
-        console.log('PayPal SDK loaded successfully');
-        window.paypalSDKLoaded = true;
-      };
     </script>
   </body>
 </html>

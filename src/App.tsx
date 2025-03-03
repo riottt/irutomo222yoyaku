@@ -4,7 +4,7 @@ import RestaurantSearch from './RestaurantSearch';
 import RestaurantDetails from './components/RestaurantDetails';
 import ReservationInput from './components/ReservationInput';
 import StoreList from './components/StoreList';
-import { supabase, testConnection, isMcpConfigured, checkMcpStatus } from './lib/supabase';
+import { supabase, testConnection } from './lib/supabase';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Outlet, Navigate, useParams } from 'react-router-dom';
 import ServiceIntroduction from './pages/ServiceIntroduction';
 import Options from './pages/Options';
@@ -183,7 +183,6 @@ function RestaurantDetailsWrapper({ language }) {
 function App() {
   const [currentLanguage, setCurrentLanguage] = useState<'ko' | 'ja' | 'en'>('ko');
   const [restaurantId, setRestaurantId] = useState<number | null>(null);
-  const [mcpStatus, setMcpStatus] = useState<{ success: boolean; message?: string; error?: any } | null>(null);
 
   const handleRestaurantSelect = (id: string) => {
     console.log('Restaurant selected:', id);
@@ -214,20 +213,11 @@ function App() {
     }
   };
 
-  // Testing Supabase connection and MCP status
+  // Testing Supabase connection
   React.useEffect(() => {
     const checkConnections = async () => {
       const result = await testConnection();
       console.log('Supabase connection test result:', result);
-      
-      if (isMcpConfigured()) {
-        const mcpResult = await checkMcpStatus();
-        console.log('MCP status check result:', mcpResult);
-        setMcpStatus(mcpResult);
-      } else {
-        console.log('MCP is not configured');
-        setMcpStatus({ success: false, message: 'MCP is not configured' });
-      }
     };
     
     checkConnections();
@@ -261,15 +251,6 @@ function App() {
         {/* スタンドアロンページ */}
         <Route path="/" element={
           <>
-            {/* MCP接続ステータス表示（開発環境のみ） */}
-            {process.env.NODE_ENV === 'development' && mcpStatus && (
-              <div className={`fixed bottom-4 right-4 p-2 rounded-md z-50 text-sm ${
-                mcpStatus.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                <p>MCP: {mcpStatus.success ? '接続済み' : '未接続'}</p>
-                {mcpStatus.message && <p>{mcpStatus.message}</p>}
-              </div>
-            )}
             <LandingPage language={currentLanguage} onLanguageChange={handleLanguageChange} />
           </>
         } />
